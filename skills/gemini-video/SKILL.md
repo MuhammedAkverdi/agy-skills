@@ -7,7 +7,7 @@ description: Generate short AI video clips for the user with their own Gemini Pr
 
 The user has a Google AI Pro subscription and wants clips made there (Veo), not through a paid API key. Same rules as the `gemini-image` skill.
 
-Quota log: `~/.gemini/config/skills/gemini-video/usage-log.csv` (tracks the rolling 5-hour Veo video quota).
+Activity log: `~/.gemini/config/skills/gemini-video/usage-log.csv` (records past clip history only — **never** use it to estimate remaining video quota).
 
 ## Antigravity Tool Mapping
 
@@ -15,12 +15,14 @@ Quota log: `~/.gemini/config/skills/gemini-video/usage-log.csv` (tracks the roll
 - **Real Chrome control (`chrome-devtools` MCP via `call_mcp_tool`):** `new_page`, `navigate_page`, `take_snapshot`, `take_screenshot`, `click`, `hover`, `fill`, `type_text`, `press_key`, `upload_file`, `evaluate_script`, `close_page`.
 - **Visual check:** `read_file` on the generated 2×2 contact sheet.
 - **Downloads & ffmpeg:** `run_command` (`$env:USERPROFILE\Downloads` on Windows, `~/Downloads` on macOS/Linux).
-- **Quota log (`~/.gemini/config/skills/gemini-video/usage-log.csv`):** Use `read_file` to read and `write_file` (`Append: true`) to append.
+- **Activity log (`~/.gemini/config/skills/gemini-video/usage-log.csv`):** Use `read_file` to read and `write_file` (`Append: true`) to append.
 - **Delivery:** Save to the destination folder and present clickable `file://` links.
 
-## 0. Before generating — quota and plan
+## 0. Before generating — live usage limit & plan
 
-- Gemini Pro video has a **small quota on a rolling 5-hour window** — not per calendar day (each clip counts for 5 hours after it was made). Read `usage-log.csv` with `read_file`, count `result='ok'` rows within the last 5 hours, and tell the user the count (and when the oldest slot frees up) before spending more. Always log `time` as local `HH:mm`.
+- Gemini Pro video has **no fixed daily cap** — availability depends on the **rolling 5-hour overall usage percentage** (for example, video generation can disable automatically when 5-hour usage climbs toward ~80–85%, even if few videos were made).
+- **`usage-log.csv` is history only** — do **not** use it to calculate or promise remaining quota (the user's chats and overall usage percentage determine the limit).
+- **Check live availability in Chrome before promising clips:** inspect `https://gemini.google.com/videos` and, if disabled and multiple Pro accounts are signed in, `https://gemini.google.com/u/1/videos` (or check `+ → More tools → Create video` / `Video oluştur` on `/app`). Verify whether the video prompt box and tool are enabled (if greyed out or disabled, that account's 5-hour window is exhausted) and read any visible usage/reset message. Report the live status honestly.
 - No throwaway or duplicate clips — always do the pre-brief (§0b) first.
 - Verified clip spec: **10 s, 1280×720, H.264 MP4 with audio.** For anything longer, plan N clips (see §6) and say so.
 - If the look must be exact (a product, a character, a specific scene), use **image-first** (§5): make and approve a still with `gemini-image` (Google Flow first), then animate it.
@@ -36,9 +38,9 @@ Quota log: `~/.gemini/config/skills/gemini-video/usage-log.csv` (tracks the roll
 Don't generate straight from a short request. First review it like a professional director/cinematographer, ask only what's missing, then generate.
 
 1. **Analyse** the request against: subject & action (one main action per 10 s clip) · where it will be used (→ Landscape 16:9 or Portrait 9:16) · style (cinematic real / 3D animation / anime …) · light & time of day · **camera move** (drone, dolly-in, orbit, static, handheld) · mood & colors · **audio** (ambient, music mood; a separate soundtrack made with the `gemini-music` skill when it adds something → §6 "Background music") · **dialogue** (exact line, who says it) · length (one clip or several → §6) · text on screen.
-2. **Ask only real gaps** — things that would clearly change the result and aren't stated. Never ask what the request already says. **At most 3–4 questions**, in ONE `ask_question` call; each with 2–4 options, the first marked `(Recommended)` with your best pick; the user can always type their own answer. Ask in the user's language.
+2. **Ask only real gaps — topic-adaptive (up to max 6):** Decide dynamically how many questions are needed for strong scene & visual consistency (**max 6 questions** in ONE `ask_question` call; use fewer if the request is already detailed). Never use fixed boilerplate options — tailor every option for style, camera move, lighting, and audio specifically to the video's subject. Put `(Recommended)` first on each question and ask in the user's language.
 3. **Correctness points — handle yourself, don't ask:** write the right rule into the prompt. E.g. religious scenes: everyone praying or reading Quran faces the Kaaba/qibla, correct salah postures, modest dress; flags, maps, landmarks and logos accurate; spoken lines and on-screen text exact; physically plausible motion; cultural details right.
-4. **Summary + approval** (video quota is small): show "Şunu üreteceğim: …" with the final settings (aspect, style, camera, audio, clips in the last 5 hours from §0) and **wait for the user's OK** before generating. Use `ask_question` with `(Recommended) Üret` / `Değiştir`.
+4. **Summary + approval** (video quota is scarce): show "Şunu üreteceğim: …" with the final settings (aspect, style, camera, audio, live Veo account availability from §0) and **wait for the user's OK** before generating. Use `ask_question` with `(Recommended) Üret` / `Değiştir`.
 
 **Skip the questions** when: the request is already detailed; the user says "hızlıca", "sormadan yap", "direkt", or "test videosu"; or it's a redo/variation of an earlier clip.
 
@@ -106,15 +108,16 @@ Check: subject/action match the prompt, no garbled text, no broken faces/hands, 
 
 ## 4. Log and sidecar
 
-After every attempt (success or error), append a CSV row to `~/.gemini/config/skills/gemini-video/usage-log.csv` using `write_file` (`Append: true`):
+After every attempt (success or error), append a CSV row to `~/.gemini/config/skills/gemini-video/usage-log.csv` using `write_file` (`Append: true`) as an activity log only (never use it to estimate remaining quota):
 ```csv
 "YYYY-MM-DD","HH:mm","ok","<name>.mp4","16:9","<prompt>"
 ```
-Save `<clip>.prompt.txt` next to the clip with prompt, aspect, timestamp, and chat URL. Deliver clickable `file://` links plus a one-line summary.
+Save `<clip>.prompt.txt` next to the clip with prompt, aspect, timestamp, and chat URL. Deliver clickable `file://` links plus a one-line summary (duration, resolution, audio, live account/method used).
 
 ## 5. Image-first (image-to-video)
 
 1. Make the still with the `gemini-image` skill — **in Google Flow first** (Nano Banana Pro, 0 credits, same aspect ratio, download 2K); get the user's OK. (Keep under 10 MB for upload.)
+   - **Flow Video fallback (`x1` strict default):** Flow can also make video (its own credit pool, e.g. Veo 3.1 Lite = 10 credits/clip, Omni 1.2 Flash 720p 8 s = 24 credits/clip). Only use it when Gemini Veo is unavailable across signed-in accounts **and** the user explicitly approves the stated credit cost. **CRITICAL `x1` GUARD:** Flow can generate up to 4 copies (`x1–x4`) of the same video prompt, multiplying credit burn up to 4×. Before sending ANY Flow video prompt, verify the settings chip is strictly set to **`Video` · `<aspect>` · `x1`** (never `x2/x3/x4` unless the user explicitly asked for multiple variants) and confirm the footer credit cost.
 2. Upload on `/videos` (never click "Upload files" directly — opens native OS picker):
    - Click **Upload and tools (+)** so the menu opens.
    - Tag the hidden input with `evaluate_script`:

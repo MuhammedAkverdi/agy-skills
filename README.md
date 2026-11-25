@@ -6,7 +6,7 @@
 |---|---|---|---|
 | **`/gemini-image`** | Google Flow (`Nano Banana Pro`) + yedek Gemini Chat | **0 kredi** | Ön brifing, 2K indirme, fotoğraf düzenleme, Instagram/YouTube boyutlandırma, yeşil ekranla şeffaf PNG logo |
 | **`/gemini-music`** | Google Flow Music (`Lyria 3.5`) | ~5 kredi / şarkı | Ön brifing, Türkçe/İngilizce söz yazımı & onayı, enstrümantal, MP3/WAV/M4A & stem ayırma |
-| **`/gemini-video`** | Gemini Pro (`Veo`, `Neon Orta`) | 5 saatlik hareketli kota | Ön brifing, 10 sn 720p sesli klip, 2×2 kare kontrolü, image-to-video (Flow → Veo), `ffmpeg` klip birleştirme & müzik miksleme |
+| **`/gemini-video`** | Gemini Pro (`Veo`, `Neon Orta`) | 5 saatlik kullanım sınırı | Canlı limit kontrolü, konuya özel ön brifing, 10 sn 720p sesli klip, 2×2 kare kontrolü, image-to-video (Flow → Veo), Flow Video `x1` yedeği, `ffmpeg` klip birleştirme & müzik miksleme |
 | **`/ui-design`** | Hibrit (`taste-skill` + `frontend-design` + `impeccable`) | Ücretsiz (yerel + Chrome MCP) | Yüzey modu & iş türü kuralları, 2 aşamalı Design Thesis (Anti-Slop Swap Test), `1440×900` & `390×844` Chrome görsel kapısı, `critique` / `polish` / `audit` |
 
 ---
@@ -96,7 +96,7 @@ Skilleri doğrudan slash komutuyla çağırabilir veya doğal dilde isteğinizi 
 /gemini-video Sisli Karadeniz kıyısında gün doğumunda yükselen sinematik drone çekimi
 ```
 
-- Önce son 5 saatteki **kota kaydını (`usage-log.csv`)** kontrol eder, kamera hareketi/ses/format için kısa sorular sorar ve **üretmeden önce son onayınızı** alır.
+- Önce Chrome'da 5 saatlik kullanım sınırına göre video aracının açık olup olmadığını **canlı kontrol eder**, konuya özel dinamik ön brifing soruları sorar (en fazla 6) ve **üretmeden önce son onayınızı** alır (yedek olarak Flow Video gerekirse maliyeti ve varsayılan `x1` kilidini bildirir).
 - Üretim bitince videoyu indirir, `ffmpeg` ile **2×2 kare kontrolü** yapar ve sonucu teslim eder.
 - Birden fazla klip üretip `ffmpeg` ile birleştirebilir veya `/gemini-music` ile arka plan müziği ekleyebilir.
 
@@ -132,7 +132,7 @@ agy-skills/
     │   └── SKILL.md
     ├── gemini-video/
     │   ├── SKILL.md
-    │   └── usage-log.csv        # Boş kota takip şablonu
+    │   └── usage-log.csv        # Video üretim geçmişi şablonu
     └── ui-design/
         ├── SKILL.md
         └── references/
