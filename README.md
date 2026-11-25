@@ -1,19 +1,20 @@
-# agy-skills — Google Antigravity Medya Skilleri
+# agy-skills — Google Antigravity Medya & UI Skilleri
 
-**Google AI Pro** aboneliğiniz üzerinden **ek API ücreti ödemeden**, doğrudan kendi Chrome tarayıcınız (`chrome-devtools` MCP) aracılığıyla görsel, müzik ve video üretmenizi sağlayan 3 adet **Antigravity** skill paketi:
+**Google AI Pro** aboneliğiniz üzerinden **ek API ücreti ödemeden** kendi Chrome tarayıcınız (`chrome-devtools` MCP) ile görsel, müzik, video üretmenizi ve hibrit anti-slop kurallarıyla profesyonel arayüzler tasarlamanızı sağlayan 4 adet **Antigravity** skill paketi:
 
-| Skill | Platform & Model | Maliyet (Google AI Pro) | Öne Çıkan Özellikler |
+| Skill | Platform / Yaklaşım | Maliyet (Google AI Pro) | Öne Çıkan Özellikler |
 |---|---|---|---|
 | **`/gemini-image`** | Google Flow (`Nano Banana Pro`) + yedek Gemini Chat | **0 kredi** | Ön brifing, 2K indirme, fotoğraf düzenleme, Instagram/YouTube boyutlandırma, yeşil ekranla şeffaf PNG logo |
 | **`/gemini-music`** | Google Flow Music (`Lyria 3.5`) | ~5 kredi / şarkı | Ön brifing, Türkçe/İngilizce söz yazımı & onayı, enstrümantal, MP3/WAV/M4A & stem ayırma |
 | **`/gemini-video`** | Gemini Pro (`Veo`, `Neon Orta`) | 5 saatlik hareketli kota | Ön brifing, 10 sn 720p sesli klip, 2×2 kare kontrolü, image-to-video (Flow → Veo), `ffmpeg` klip birleştirme & müzik miksleme |
+| **`/ui-design`** | Hibrit (`taste-skill` + `frontend-design` + `impeccable`) | Ücretsiz (yerel + Chrome MCP) | Yüzey modu & iş türü kuralları, 2 aşamalı Design Thesis (Anti-Slop Swap Test), `1440×900` & `390×844` Chrome görsel kapısı, `critique` / `polish` / `audit` |
 
 ---
 
 ## Gereksinimler
 
 1. **Google Antigravity** (IDE veya CLI)
-2. **Google AI Pro** aboneliği (kendi Chrome tarayıcınızda oturumu açık olmalı)
+2. **Google AI Pro** aboneliği (medya skilleri için kendi Chrome tarayıcınızda oturumu açık olmalı)
 3. **`chrome-devtools` MCP eklentisi** (Antigravity Plugins üzerinden kurulu ve aktif)
 4. **`ffmpeg` ve `ffprobe`** (video kare kontrolü, boyutlandırma, şeffaf PNG ve klip birleştirme için)
    - Windows: `winget install Gyan.FFmpeg`
@@ -42,7 +43,7 @@ bash install.sh
 
 ### Manuel Kurulum
 
-`skills/` klasörünün içindeki `gemini-image`, `gemini-music` ve `gemini-video` klasörlerini Antigravity'nin global skill dizinine kopyalayın:
+`skills/` klasörünün içindeki `gemini-image`, `gemini-music`, `gemini-video` ve `ui-design` klasörlerini alt dosyalarıyla birlikte Antigravity'nin global skill dizinine kopyalayın:
 
 - **Windows:** `C:\Users\<KullanıcıAdı>\.gemini\config\skills\`
 - **macOS / Linux:** `~/.gemini/config/skills/`
@@ -53,7 +54,7 @@ Kurulumdan sonra Antigravity'de **yeni bir sohbet** açtığınızda skiller oto
 
 ## Chrome Bağlantısı (`chrome-devtools` MCP)
 
-Skiller, oturumu zaten açık olan gerçek Chrome tarayıcınızı kontrol eder (böylece şifre girmeniz gerekmez):
+Skiller, oturumu zaten açık olan gerçek Chrome tarayıcınızı kontrol eder (medya üretimi için şifre girmeniz gerekmez; `/ui-design` ise sayfayı `1440×900` ve `390×844` boyutlarında açıp görsel hata denetimi yapar):
 
 1. Antigravity'de **Chrome DevTools** MCP eklentisinin açık olduğundan emin olun.
 2. Chrome'da `chrome://inspect/#remote-debugging` sayfasını açıp uzaktan hata ayıklamaya izin verin (Chrome ilk bağlantıda onay ister).
@@ -99,6 +100,21 @@ Skilleri doğrudan slash komutuyla çağırabilir veya doğal dilde isteğinizi 
 - Üretim bitince videoyu indirir, `ffmpeg` ile **2×2 kare kontrolü** yapar ve sonucu teslim eder.
 - Birden fazla klip üretip `ffmpeg` ile birleştirebilir veya `/gemini-music` ile arka plan müziği ekleyebilir.
 
+### 4. `/ui-design` — Anti-Slop UI & Frontend Tasarımı
+
+```text
+/ui-design Yerel edge API izleme aracı için sade ve keskin teknik landing page tasarla
+```
+
+- Varsayılan olarak kısa ön brifing alır, ardından 2 aşamalı **Design Thesis (Swap Test)** ile 2026 AI klişelerini eler (`craft-floor.md`), arayüzü yazar ve Chrome'da `1440×900` + `390×844` görünümlerini ekran görüntüsüyle inceleyip `polish` turundan geçirir.
+- Hızlı tek adımda üretim veya mevcut arayüzü iyileştirme komutları:
+  ```text
+  /ui-design hızlıca SaaS fiyatlandırma sayfası yap
+  /ui-design polish src/app/page.tsx
+  /ui-design critique http://localhost:3000
+  /ui-design audit
+  ```
+
 ---
 
 ## Klasör Yapısı
@@ -114,9 +130,14 @@ agy-skills/
     │   └── SKILL.md
     ├── gemini-music/
     │   └── SKILL.md
-    └── gemini-video/
+    ├── gemini-video/
+    │   ├── SKILL.md
+    │   └── usage-log.csv        # Boş kota takip şablonu
+    └── ui-design/
         ├── SKILL.md
-        └── usage-log.csv        # Boş kota takip şablonu
+        └── references/
+            ├── craft-floor.md
+            └── critique-and-polish.md
 ```
 
 ---

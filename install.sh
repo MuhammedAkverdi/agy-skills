@@ -12,12 +12,18 @@ fi
 
 mkdir -p "$TARGET_ROOT"
 
-for skill in gemini-image gemini-music gemini-video; do
+for skill in gemini-image gemini-music gemini-video ui-design; do
   src="$SOURCE_SKILLS/$skill"
   dst="$TARGET_ROOT/$skill"
 
   mkdir -p "$dst"
   cp -f "$src/SKILL.md" "$dst/SKILL.md"
+
+  # references/ klasoru varsa icerigini temiz sekilde kopyala
+  if [ -d "$src/references" ]; then
+    mkdir -p "$dst/references"
+    cp -rf "$src/references/." "$dst/references/"
+  fi
 
   # Mevcut usage-log.csv varsa ezme
   if [ -f "$src/usage-log.csv" ] && [ ! -f "$dst/usage-log.csv" ]; then
@@ -29,7 +35,7 @@ done
 
 echo ""
 echo "Kurulum tamamlandi!"
-echo "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music ve /gemini-video skillerini kullanabilirsiniz."
+echo "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music, /gemini-video ve /ui-design skillerini kullanabilirsiniz."
 echo ""
 echo "Hatirlatma:"
 echo "  1. Chrome'da Google AI Pro hesabiniz acik olsun."

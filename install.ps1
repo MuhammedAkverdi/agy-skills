@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Antigravity global skill kurulum scripti (Windows PowerShell).
-    gemini-image, gemini-music ve gemini-video skillerini ~/.gemini/config/skills/ dizinine kurar.
+    gemini-image, gemini-music, gemini-video ve ui-design skillerini ~/.gemini/config/skills/ dizinine kurar.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -16,7 +16,7 @@ if (-not (Test-Path $SourceSkills)) {
 
 New-Item -ItemType Directory -Force -Path $TargetRoot | Out-Null
 
-$Skills = @("gemini-image", "gemini-music", "gemini-video")
+$Skills = @("gemini-image", "gemini-music", "gemini-video", "ui-design")
 
 foreach ($skill in $Skills) {
     $src = Join-Path $SourceSkills $skill
@@ -24,6 +24,14 @@ foreach ($skill in $Skills) {
 
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     Copy-Item -Path (Join-Path $src "SKILL.md") -Destination (Join-Path $dst "SKILL.md") -Force
+
+    # references/ klasoru varsa icerigini temiz sekilde kopyala (ic ice references/ olusturmadan)
+    $srcRefs = Join-Path $src "references"
+    $dstRefs = Join-Path $dst "references"
+    if (Test-Path $srcRefs) {
+        New-Item -ItemType Directory -Force -Path $dstRefs | Out-Null
+        Copy-Item -Path (Join-Path $srcRefs "*") -Destination $dstRefs -Recurse -Force
+    }
 
     # usage-log.csv zaten varsa kullanicinin mevcut kota kaydini ezme
     $srcLog = Join-Path $src "usage-log.csv"
@@ -37,7 +45,7 @@ foreach ($skill in $Skills) {
 
 Write-Host ""
 Write-Host "Kurulum tamamlandi!" -ForegroundColor Cyan
-Write-Host "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music ve /gemini-video skillerini kullanabilirsiniz."
+Write-Host "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music, /gemini-video ve /ui-design skillerini kullanabilirsiniz."
 Write-Host ""
 Write-Host "Hatirlatma:" -ForegroundColor Yellow
 Write-Host "  1. Chrome'da Google AI Pro hesabiniz acik olsun."
