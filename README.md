@@ -1,14 +1,15 @@
 # agy-skills — Google Antigravity Medya & UI Skilleri
 
-**Google AI Pro** aboneliğiniz üzerinden **ek API ücreti ödemeden** kendi Chrome tarayıcınız (`chrome-devtools` MCP) ile görsel, müzik, video, Türkçe dış ses ve uçtan uca Reels üretmenizi, hibrit anti-slop kurallarıyla profesyonel arayüzler tasarlamanızı sağlayan 6 adet **Antigravity** skill paketi:
+**Google AI Pro** aboneliğiniz üzerinden **ek API ücreti ödemeden** kendi Chrome tarayıcınız (`chrome-devtools` MCP) ile görsel, müzik, video, ücretsiz yerel Türkçe dış ses ve uçtan uca Reels üretmenizi, hibrit anti-slop kurallarıyla profesyonel arayüzler tasarlamanızı sağlayan 7 adet **Antigravity** skill paketi:
 
 | Skill | Platform / Yaklaşım | Maliyet (Google AI Pro) | Öne Çıkan Özellikler |
 |---|---|---|---|
 | **`/gemini-image`** | Google Flow (`Nano Banana Pro`) + yedek Gemini Chat | **0 kredi** | Ön brifing, 2K indirme, fotoğraf düzenleme, Instagram/YouTube boyutlandırma, yeşil ekranla şeffaf PNG logo |
 | **`/gemini-music`** | Google Flow Music (`Lyria 3.5`) | ~5 kredi / şarkı | Ön brifing, Türkçe/İngilizce söz yazımı & onayı, enstrümantal, MP3/WAV/M4A & stem ayırma |
 | **`/gemini-video`** | Gemini Pro (`Veo`, `Neon Orta`) | 5 saatlik kullanım sınırı | Canlı limit kontrolü, konuya özel ön brifing, 10 sn 720p sesli klip, 2×2 kare kontrolü, image-to-video (Flow → Veo), Flow Video `x1` yedeği, `ffmpeg` klip birleştirme & müzik miksleme |
-| **`/gemini-reels`** | Yukarıdaki skillerin yönetmeni + `ffmpeg` | Görseller 0 kredi, Veo kotası, ~5 kredi müzik, ElevenLabs karakteri | Senaryo + Style Lock, 9:16 görseller, her sahne gerçek video, kadın/erkek anlatıcı örnekleri, müziği sese göre kısan miks, kelime kelime altyazı, ortalı başlık, 16 sn taslak onayı, kapak + Instagram açıklaması |
-| **`/elevenlabs-tts`** | ElevenLabs REST API (`/with-timestamps`) | Ücretsiz plan: 10.000 karakter/ay | Türkçe dış ses, `-Speed` ile yavaş anlatım, karakter karakter zaman damgası (altyazı için), ses seçimi kuralları |
+| **`/gemini-reels`** | Yukarıdaki skillerin yönetmeni + `ffmpeg` | Görseller 0 kredi, Veo kotası, ~5 kredi müzik, dış ses ücretsiz (yerel) | Senaryo + Style Lock, 9:16 görseller, her sahne gerçek video, kadın/erkek anlatıcı örnekleri, müziği sese göre kısan miks, kelime kelime altyazı, ortalı başlık, 16 sn taslak onayı, kapak + Instagram açıklaması |
+| **`/local-tts`** | Bilgisayarınızda: yazgı-tts-1 (Apache-2.0) + Supertonic 3 (OpenRAIL-M) + faster-whisper (MIT) | **Ücretsiz**, anahtar/hesap yok, ekran kartı gerekmez | 3 seçilmiş ses (sıcak erkek anlatıcı, sakin olgun kadın, çok dilli erkek), `--speed`, kelime zamanları (ElevenLabs ile aynı biçim), Reels'in varsayılan anlatıcısı |
+| **`/elevenlabs-tts`** | ElevenLabs REST API (`/with-timestamps`) | İsteğe bağlı; ücretsiz plan: 10.000 karakter/ay | Türkçe dış ses, `-Speed` ile yavaş anlatım, karakter karakter zaman damgası (altyazı için), ses seçimi kuralları |
 | **`/ui-design`** | Hibrit (`taste-skill` + `frontend-design` + `impeccable`) | Ücretsiz (yerel + Chrome MCP) | Yüzey modu & iş türü kuralları, 2 aşamalı Design Thesis (Anti-Slop Swap Test), `1440×900` & `390×844` Chrome görsel kapısı, `critique` / `polish` / `audit` |
 
 ---
@@ -22,7 +23,11 @@
    - Windows: `winget install Gyan.FFmpeg`
    - macOS: `brew install ffmpeg`
    - Linux (Ubuntu/Debian): `sudo apt install ffmpeg`
-5. **ElevenLabs API anahtarı** (`/elevenlabs-tts` ve `/gemini-reels` dış sesi için; ücretsiz plan yeterli). Kendi PowerShell'inizde bir kez çalıştırın, yazdığınız görünmez ve geçmişe kaydedilmez:
+5. **Python 3.11+** (`/local-tts` için; ilk kullanımda ayrı bir ortama ~1,5 GB indirir):
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.gemini\config\skills\local-tts\scripts\setup.ps1" -Warmup
+   ```
+6. İsteğe bağlı: **ElevenLabs API anahtarı** (sadece `/elevenlabs-tts` için; ücretsiz plan yeterli). Kendi PowerShell'inizde bir kez çalıştırın, yazdığınız görünmez ve geçmişe kaydedilmez:
    ```powershell
    $k = Read-Host "ElevenLabs anahtari" -AsSecureString; [Environment]::SetEnvironmentVariable('ELEVENLABS_API_KEY',[Net.NetworkCredential]::new('',$k).Password,'User')
    ```
@@ -52,7 +57,7 @@ bash install.sh
 
 Kurulum script'leri aynı isimdeki eski skilleri `skills-backup-<tarih>` klasörüne yedekler, mevcut `usage-log.csv` ve `.env` dosyalarınızı korur. Sadece bazılarını kurmak için: `.\install.ps1 -Only gemini-reels,elevenlabs-tts` veya `bash install.sh gemini-reels elevenlabs-tts`.
 
-Manuel kurulum için `skills/` klasörünün içindeki skill klasörlerini (`gemini-image`, `gemini-music`, `gemini-video`, `gemini-reels`, `elevenlabs-tts`, `ui-design`) alt dosyalarıyla birlikte Antigravity'nin global skill dizinine kopyalayın:
+Manuel kurulum için `skills/` klasörünün içindeki skill klasörlerini (`gemini-image`, `gemini-music`, `gemini-video`, `gemini-reels`, `local-tts`, `elevenlabs-tts`, `ui-design`) alt dosyalarıyla birlikte Antigravity'nin global skill dizinine kopyalayın:
 
 - **Windows:** `C:\Users\<KullanıcıAdı>\.gemini\config\skills\`
 - **macOS / Linux:** `~/.gemini/config/skills/`
@@ -116,11 +121,19 @@ Skilleri doğrudan slash komutuyla çağırabilir veya doğal dilde isteğinizi 
 ```
 
 - Önce süreyi (saniye), anlatıcı sesini ve ses yapısını sorar; senaryoyu ve **storyboard**'u onayınıza sunmadan kota/kredi harcamaz.
-- Görselleri Flow'da 9:16 üretir, **her sahneyi gerçek video** olarak Veo'da canlandırır (iki hesap paralel), anlatıcı için 2–3 ses örneği dinletir, Flow Music'te fon müziği yapar.
+- Görselleri Flow'da 9:16 üretir, **her sahneyi gerçek video** olarak Veo'da canlandırır (iki hesap paralel), anlatıcı için 2–3 ses örneği dinletir (varsayılan ücretsiz yerel ses), Flow Music'te fon müziği yapar.
 - `ffmpeg` ile birleştirir: anlatıcı müziğin en az 8 dB üstünde (ölçülerek), müzik konuşurken otomatik kısılır, **altyazı kelime kelime** gelir, başlık ortalı ve animasyonlu. Tamamını yapmadan önce **16 sn'lik taslağı** onaylatır.
 - Teslim: `final-reels.mp4`, kapak, storyboard ve Instagram açıklaması + hashtag'ler.
 
-### 5. `/elevenlabs-tts` — Türkçe Dış Ses
+### 5. `/local-tts` — Ücretsiz Türkçe Dış Ses
+
+```text
+/local-tts Bu metni sıcak bir erkek sesiyle, yavaş tempoda seslendir
+```
+
+- Sadece dinleme testinden geçen 3 sesi önerir (`yazgi-male-01`, `yazgi-female-02`, `supertonic-M2`), sahne başına `vo-01.mp3` + `alignment.json` üretir; kelime zamanları ElevenLabs'inkinden ortalama ~0,05 sn sapar.
+
+### 6. `/elevenlabs-tts` — ElevenLabs Dış Ses (isteğe bağlı)
 
 ```text
 /elevenlabs-tts Bu metni sıcak bir kadın sesiyle, yavaş tempoda seslendir
@@ -128,7 +141,7 @@ Skilleri doğrudan slash komutuyla çağırabilir veya doğal dilde isteğinizi 
 
 - Kota ve ses listesini kontrol eder, metni ve sesi onaylatır, sahne başına `vo-01.mp3` + `alignment.json` (altyazı zamanlaması) üretir. Masallarda `-Speed 0.85–0.9` önerir.
 
-### 6. `/ui-design` — Anti-Slop UI & Frontend Tasarımı
+### 7. `/ui-design` — Anti-Slop UI & Frontend Tasarımı
 
 ```text
 /ui-design Yerel edge API izleme aracı için sade ve keskin teknik landing page tasarla
@@ -163,6 +176,11 @@ agy-skills/
     │   └── usage-log.csv        # Video üretim geçmişi şablonu
     ├── gemini-reels/
     │   └── SKILL.md
+    ├── local-tts/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       ├── local_tts.py     # Yerel dış ses + whisper kelime zamanları
+    │       └── setup.ps1        # Tek seferlik kurulum (ayrı Python ortamı)
     ├── elevenlabs-tts/
     │   ├── SKILL.md
     │   └── scripts/

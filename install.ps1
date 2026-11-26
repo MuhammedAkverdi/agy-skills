@@ -2,7 +2,7 @@
 .SYNOPSIS
     Antigravity global skill kurulum scripti (Windows PowerShell).
     skills/ altindaki tum skilleri (gemini-image, gemini-music, gemini-video, gemini-reels,
-    elevenlabs-tts, ui-design) ~/.gemini/config/skills/ dizinine kurar.
+    local-tts, elevenlabs-tts, ui-design) ~/.gemini/config/skills/ dizinine kurar.
     Ayni isimde skill varsa once yedekler; mevcut usage-log.csv ve .env dosyalarini korur.
 .EXAMPLE
     .\install.ps1
@@ -49,5 +49,8 @@ Write-Host "  1. Chrome'da Google AI Pro hesabiniz acik olsun."
 Write-Host "  2. Chrome DevTools MCP baglantisi aktif olsun (chrome://inspect/#remote-debugging)."
 Write-Host "  3. ffmpeg ve ffprobe PATH uzerinde kurulu olsun."
 if (($Skills -contains "elevenlabs-tts") -and -not ([Environment]::GetEnvironmentVariable("ELEVENLABS_API_KEY", "User") -or $env:ELEVENLABS_API_KEY)) {
-    Write-Host "  4. ELEVENLABS_API_KEY ayarli degil (README'deki guvenli komutla bir kez ayarlayin)." -ForegroundColor Yellow
+    Write-Host "  4. ELEVENLABS_API_KEY ayarli degil (sadece elevenlabs-tts icin; local-tts ucretsiz)." -ForegroundColor Yellow
+}
+if (($Skills -contains "local-tts") -and -not (Test-Path (Join-Path $env:USERPROFILE ".local-tts\venv\Scripts\python.exe"))) {
+    Write-Host "  5. Ucretsiz yerel sesler icin bir kez (~1,5 GB): powershell -ExecutionPolicy Bypass -File `"$Target\local-tts\scripts\setup.ps1`" -Warmup" -ForegroundColor Yellow
 }

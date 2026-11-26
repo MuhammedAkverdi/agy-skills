@@ -1,6 +1,6 @@
 ---
 name: gemini-reels
-description: Orchestrate end-to-end vertical Instagram Reels, YouTube Shorts, and TikTok video creation using the user's Google AI Pro accounts — planning a scenario and Style Lock first, generating 9:16 keyframes in Google Flow (`gemini-image`, 0 credits), animating scenes via Gemini Veo (`gemini-video`), Flow Video (`x1` strict default), or Hybrid 2K motion, composing a custom soundtrack in Flow Music (`gemini-music`, ~5 credits), and assembling the final 1080x1920 MP4, cover image, and caption/hashtag draft with ffmpeg. Use whenever the user asks to create a Reel/Short/vertical video, or says "reels oluştur", "reels yap", "reels videosu", "shorts yap", "tiktok videosu", "dikey video hazırla", "make a reel", "create a reels video", or invokes `/gemini-reels`.
+description: Orchestrate end-to-end vertical Instagram Reels, YouTube Shorts, and TikTok video creation using the user's Google AI Pro accounts — planning a scenario and Style Lock first, generating 9:16 keyframes in Google Flow (`gemini-image`, 0 credits), animating scenes via Gemini Veo (`gemini-video`), Flow Video (`x1` strict default), or Hybrid 2K motion, narrating with the free local `local-tts` voices by default (`elevenlabs-tts` optional), composing a custom soundtrack in Flow Music (`gemini-music`, ~5 credits), and assembling the final 1080x1920 MP4, cover image, and caption/hashtag draft with ffmpeg. Use whenever the user asks to create a Reel/Short/vertical video, or says "reels oluştur", "reels yap", "reels videosu", "shorts yap", "tiktok videosu", "dikey video hazırla", "make a reel", "create a reels video", or invokes `/gemini-reels`.
 ---
 
 # Instagram Reels / Shorts Pipeline (`gemini-reels` Orchestrator)
@@ -8,7 +8,8 @@ description: Orchestrate end-to-end vertical Instagram Reels, YouTube Shorts, an
 This skill is the **director / orchestrator** for vertical `9:16` (`1080×1920`) short-form videos. It coordinates the user's existing skills in real Chrome (`chrome-devtools` MCP) and local REST APIs — never paid Gemini/Veo API keys:
 - **Keyframes & Cover (`0 credits`):** `$env:USERPROFILE\.gemini\config\skills\gemini-image\SKILL.md` (Google Flow, Nano Banana Pro, 9:16, 2K download)
 - **Scene Motion / Video (`0 credits`):** `$env:USERPROFILE\.gemini\config\skills\gemini-video\SKILL.md` (Gemini Pro Veo I2V in Portrait `9:16`, **Neon Orta**, or Flow Video strictly `x1` if approved)
-- **Voiceover & Alignment (`elevenlabs-tts`, ~300–450 chars / 10,000 free/mo):** `$env:USERPROFILE\.gemini\config\skills\elevenlabs-tts\SKILL.md` (REST API `/with-timestamps`, **~2 s generation**, millisecond subtitle alignment — default for Narrator / Dış Ses)
+- **Voiceover & Alignment — default `local-tts` (free, CPU, no key):** `$env:USERPROFILE\.gemini\config\skills\local-tts\SKILL.md` (yazgı-tts-1 / Supertonic 3 + faster-whisper word timings; voices `yazgi-male-01`, `yazgi-female-02`, `supertonic-M2` only)
+- **Voiceover — optional `elevenlabs-tts`** (when the user wants ElevenLabs; ~300–450 chars / 10,000 free/mo): `$env:USERPROFILE\.gemini\config\skills\elevenlabs-tts\SKILL.md`. Both write `vo-XX.mp3` + `.alignment.json` in the same format, so assembly is identical.
 - **Soundtrack (`~5 credits`):** `$env:USERPROFILE\.gemini\config\skills\gemini-music\SKILL.md` (Flow Music, Lyria 3.5)
 - **Assembly & Packaging:** `ffmpeg` / `ffprobe` via `run_command`, visual QA via `read_file`.
 
@@ -25,7 +26,7 @@ Read the relevant sibling `SKILL.md` before executing its steps so all DOM selec
 ├── senaryo.md               # Scenario, Style Lock, scene table, live limit check, IG caption & hashtags
 ├── 01-frames\               # 9:16 2K Flow keyframes (scene-01.jpg ...), prompt sidecars, storyboard.jpg
 ├── 02-clips\                # Raw Veo / Flow x1 / Hybrid motion clips + trimmed/normalized 1080x1920 clips
-├── 03-audio\                # ElevenLabs voiceovers (vo-01.mp3 + .alignment.json) + Flow Music (soundtrack.mp3)
+├── 03-audio\                # Voiceovers (vo-01.mp3 + .alignment.json, local-tts or ElevenLabs) + Flow Music (soundtrack.mp3)
 ├── cover-1080x1920.jpg      # Clean 1080x1920 Reels cover image
 └── final-reels.mp4          # Final 1080x1920, 30 fps, H.264 + AAC Reels video
 ```
@@ -37,7 +38,7 @@ Read the relevant sibling `SKILL.md` before executing its steps so all DOM selec
 ### 0a. Check Active Workspace + Live Availability (Do NOT rely on `usage-log.csv`)
 1. Confirm an active workspace exists (warn and stop if none).
 2. **Gemini Pro Veo:** Check **live availability in Chrome** (`https://gemini.google.com/videos` Account 0 and `https://gemini.google.com/u/1/videos` Account 1) — verify **Pro** badge, **Neon Orta**, and that the prompt box + `Create video / Video oluştur` tool are enabled. Never use `usage-log.csv` to promise remaining quota.
-3. **ElevenLabs (when voiceover/narration is planned):** Check `ELEVENLABS_API_KEY` + remaining characters via `elevenlabs-tts\scripts\check_quota.ps1` (never print the key). If the key isn't set yet, let the user set it once or fall back to Veo native dialogue / instrumental-only.
+3. **Narration engine (when voiceover is planned):** `local-tts` — check `%USERPROFILE%\.local-tts\venv\Scripts\python.exe` exists, else offer its one-time setup (`local-tts` Step 0, ~1.5 GB). ElevenLabs only if the user chooses it: check `ELEVENLABS_API_KEY` + remaining characters via `elevenlabs-tts\scripts\check_quota.ps1` (never print the key).
 
 ### 0b. Dynamic, Topic-Adaptive Pre-brief (`ask_question`)
 Never dump fixed boilerplate choices. Think like a Reels director and craft **only the questions needed for strong visual and narrative consistency** on *this specific topic* (**up to max 6 creative questions** in ONE `ask_question` call; use fewer when the prompt is already rich), **plus an explicit duration-in-seconds question** whenever the user hasn't already specified a target length:
@@ -45,8 +46,8 @@ Never dump fixed boilerplate choices. Think like a Reels director and craft **on
 - **Target duration in seconds (always ask if unspecified — in addition to the topic questions):** e.g. *"Reels videosu kaç saniye olsun? (İstediğin tam saniyeyi yazabilirsin)"* → `(Recommended) 30 sn (4–5 sahne)` / `15–20 sn (2–3 sahne)` / `60 sn (1 dk, 8–10 sahne)` / `90 sn (1.5 dk, 12–14 sahne)`.
 - **Topic-tailored options:** Every option for visual style, audio/music direction, pacing, perspective, and on-screen text MUST match the user's subject.
 - **Recommended first:** Put `(Recommended)` on your strongest pick for each question. Ask in Turkish (unless the user wrote in English).
-- **Audio structure default:** Recommend **`ElevenLabs Anlatıcı (Dış Ses) + Veo ortam sesi + Flow Music`** whenever storytelling/narration fits — it eliminates Turkish lip-sync glitches, keeps one consistent narrator voice, gives exact subtitle timestamps, and generates in ~2 s via REST API. Offer Veo native dialogue or music-only as alternatives.
-- **Narrator voice:** gender/character must fit the genre (children's tale / lullaby → warm, soft **female** storyteller); voice samples are played after the scenario (User review rule 2).
+- **Audio structure default:** Recommend **`Anlatıcı (Dış Ses) + Veo ortam sesi + Flow Music`** whenever storytelling/narration fits — it eliminates Turkish lip-sync glitches, keeps one consistent narrator voice and gives exact subtitle timestamps. Offer Veo native dialogue or music-only as alternatives.
+- **Narrator voice:** free local voices first — "Yerel ses, sıcak erkek anlatıcı (yazgı male-01)" / "Yerel ses, sakin olgun kadın (yazgı female-02)" / "ElevenLabs (anahtar gerekir; genç kadın sesi, daha duygulu)"; recommend by genre. Voice samples are played after the scenario (User review rule 2).
 - **Every scene real video (default):** Hybrid still+zoompan is used **only if the user picks it** here or in the Cost Plan (User review rule 4).
 
 Skip questions only when the user says `"hızlıca"`, `"direkt"`, or `"sormadan"`. Even then, state your assumptions and get credit/quota approval before spending paid credits or scarce video quota.
@@ -98,8 +99,8 @@ Design a tight vertical **Hook (0–3 s) → Development → Climax / Final CTA*
 
 ## Stage 3 — Fast Parallel Video Generation & Audio-First Voiceover
 
-### 3a. ElevenLabs Voiceover First (`elevenlabs-tts`, ~2 s, when using Narrator / Dış Ses)
-First generate **2–3 one-line voice samples** and let the user pick (`ask_question`); use `-Speed 0.85–0.9` for tales. Then generate per-scene Turkish narration **before** final clip trimming (`03-audio\vo-01.mp3`, `vo-02.mp3`, ... + `*.alignment.json`) via `elevenlabs-tts\scripts\tts_generate.ps1`. Use each clip's `duration_s` (`vo_dur + 0.6–0.8 s`, typically `5–7.5 s`) as the exact trim target so pacing stays crisp.
+### 3a. Voiceover First (`local-tts` by default, or `elevenlabs-tts`)
+First generate **2–3 one-line voice samples** and let the user pick (`ask_question`); use speed 0.85–0.9 for tales. Then generate per-scene Turkish narration **before** final clip trimming (`03-audio\vo-01.mp3`, `vo-02.mp3`, ... + `*.alignment.json`) in ONE batch run: `local_tts.py --voice <picked> --speed 0.9 --batch jobs.json` (check every line's `words_matched`; re-make any clip with a `warning`), or with ElevenLabs via `elevenlabs-tts\scripts\tts_generate.ps1 -Speed 0.88`. Use each clip's `duration_s` (`vo_dur + 0.6–0.8 s`, typically `5–7.5 s`) as the exact trim target so pacing stays crisp.
 
 ### 3b. Staggered Parallel Veo Generation (Priority 1: Gemini Pro Veo, `9:16`, Neon Orta)
 - Follow `gemini-video` §2, §5, and §6 (**Image-first + Fast DOM setup**):
@@ -202,8 +203,8 @@ Always generate both deliverables alongside `final-reels.mp4`:
 
 The first "Fındık ve Kayıp Ay" (60 s children's tale) was rejected; v2 with these fixes was approved ("çok güzel olmuş"):
 1. **Voice buried under music** → loudness-based mix with sidechain ducking, measured check (Stage 5b).
-2. **Male narrator on a children's tale** → fitting female storyteller, samples first (`elevenlabs-tts` voice lessons; free plan = premade voices only).
-3. **Narrator too fast** → `-Speed 0.85–0.9`; scene length = delay + VO + ~1.1 s, VO must finish inside its own clip.
+2. **Male narrator on a children's tale** → fitting storyteller, samples first. Since 2026-11-26 the free `local-tts` voices are the default; only `yazgi-male-01`, `yazgi-female-02` and `supertonic-M2` passed a blind listening test — never offer other yazgı/Supertonic voices (ElevenLabs free plan = premade voices only).
+3. **Narrator too fast** → speed 0.85–0.9 (`local_tts.py --speed` / `tts_generate.ps1 -Speed`); scene length = delay + VO + ~1.1 s, VO must finish inside its own clip.
 4. **"Photo-only" scenes** → every scene real video unless the user picks Hybrid.
 5. **Static subtitles** → word-by-word reveal from alignment (Stage 5c).
 6. **Crooked, ugly title** → centred single line, equal margins, animated, frame checked.
@@ -219,7 +220,7 @@ Other practical lessons from that run:
 ## Rules
 
 - Never start Stage 1/2 production without an active workspace open (warn first if missing).
-- Always plan the scenario (`Stage 1`) with Director QA checks and get approval before generating keyframes; always show `storyboard.jpg` (`Stage 2`) before spending Veo quota, ElevenLabs characters, or Flow Video credits.
+- Always plan the scenario (`Stage 1`) with Director QA checks and get approval before generating keyframes; always show `storyboard.jpg` (`Stage 2`) before spending Veo quota, narration (local or ElevenLabs characters), or Flow Video credits.
 - Never trust `usage-log.csv` alone for remaining Gemini video quota — check live availability in Chrome.
 - Never generate Flow Video at `x2`, `x3`, or `x4` by default — strictly **`x1`** and only after explicit user approval of the credit cost.
 - Never print/log `ELEVENLABS_API_KEY`; never use paid Gemini/Veo API keys; close every Chrome tab opened during generation (`close_page`).

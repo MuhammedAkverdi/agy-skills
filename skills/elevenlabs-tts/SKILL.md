@@ -1,11 +1,11 @@
 ---
 name: elevenlabs-tts
-description: Generate high-quality Turkish and multilingual voiceovers, narration, and character-level timestamp alignments via the ElevenLabs REST API (`with-timestamps`), using the user's ElevenLabs account (10,000 free characters/month or paid plan) with zero browser automation latency. Use whenever a video, Reels, Short, ad, or narration needs realistic Turkish speech, narrator voiceover, or exact subtitle timing.
+description: Generate high-quality Turkish and multilingual voiceovers, narration, and character-level timestamp alignments via the ElevenLabs REST API (`with-timestamps`), using the user's ElevenLabs account (10,000 free characters/month or paid plan) with zero browser automation latency. Use when the user asks for ElevenLabs, a young female voice or a more emotional read; the free `local-tts` skill is the default narrator for `gemini-reels` and plain voiceover requests.
 ---
 
 # ElevenLabs TTS & Alignment (`elevenlabs-tts`)
 
-Generates studio-quality voiceovers (`MP3` + `alignment.json` character timestamps) in **~2 seconds** via ElevenLabs REST API — ideal as the default **Narrator / Dış Ses** engine for `gemini-reels` and `gemini-video`.
+Generates studio-quality voiceovers (`MP3` + `alignment.json` character timestamps) in **~2 seconds** via ElevenLabs REST API — the optional ElevenLabs engine for `gemini-reels` / `gemini-video` (the free `local-tts` skill is the default narrator; same output format).
 
 > **Hosted ElevenLabs MCP (`https://api.elevenlabs.io/v1/mcp`, OAuth):** If the user also connects ElevenLabs' hosted MCP server in `mcp_config.json`, use MCP for browsing/cloning voices or quick OAuth-backed audio calls, while keeping `tts_generate.ps1` (`/with-timestamps`) as the **primary Reels engine** because it saves `.mp3` + `.alignment.json` directly into the project folder for millisecond `.ass` subtitles.
 
