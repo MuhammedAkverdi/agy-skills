@@ -5,20 +5,22 @@ description: Make songs, instrumentals, jingles, background music and sound effe
 
 # Music via Google Flow Music (Antigravity + Chrome DevTools MCP)
 
-Google AI Pro includes **Flow Music** (Lyria 3.5) with generous monthly + daily credits (**one song ≈ 5 credits**). Downloads (MP3/WAV/M4A, stems) are free and unlimited. Use the user's already signed-in Chrome profile — never type credentials.
+The user's Google AI Pro includes **Flow Music "Plus"**: ~10,000 credits a month + daily free top-ups. **One song ≈ 5 credits** (verified 2026-11-25: 10,530 → 10,525). Downloads (MP3/WAV/M4A, stems) are free and unlimited. Same house rules as the `gemini-image` / `gemini-video` skills.
+
+Account in Chrome: the user's own Flow Music profile and Google account (already signed in). Never type credentials.
 
 ## Antigravity Tool Mapping
 
 - **Questions:** `ask_question` (put recommended option first with `(Recommended)`).
-- **Real Chrome control (`chrome-devtools` MCP via `call_mcp_tool`):** `new_page`, `navigate_page`, `take_snapshot`, `take_screenshot`, `click`, `hover`, `fill`, `type_text`, `press_key`, `upload_file`, `evaluate_script`, `close_page`.
-- **Downloads & ffprobe/ffmpeg:** `run_command` (`$env:USERPROFILE\Downloads` on Windows, `~/Downloads` on macOS/Linux).
+- **Real Chrome control (`chrome-devtools` MCP via `call_mcp_tool`):** `new_page`, `navigate_page`, `take_snapshot`, `take_screenshot`, `click`, `fill`, `type_text`, `press_key`, `upload_file`, `evaluate_script`, `close_page`.
+- **Downloads & ffprobe/ffmpeg:** `run_command` (`$env:USERPROFILE\Downloads` is directly accessible).
 - **Delivery:** Save to the destination folder and present clickable `file://` links.
 
 ## 0. Pre-brief — think like a producer before generating
 
 1. **Analyse** the request against: purpose / where it's used (video background, Reels, gift song, jingle, ad) · vocal or instrumental · language of the lyrics · genre & reference mood · tempo/energy (BPM) · length · vocal type (female/male, choir, rap) · story/subject of the lyrics · names or words that must appear.
-2. **Ask only real gaps** — at most 3–4 questions in ONE `ask_question` call, 2–4 options each, the first `(Recommended)`. Ask in the user's language. Example: "Sözlü mü olsun?" → `(Recommended) Türkçe sözlü` / `Enstrümantal` / `İngilizce sözlü`.
-3. **Lyrics:** if vocal, write the lyrics yourself (or improve the user's) with section tags `[Intro] [Verse] [Pre-Chorus] [Chorus] [Bridge] [Outro]`, short singable lines, accurate spelling (including Turkish characters ç ğ ı İ ö ş ü), names spelled exactly. **Show the lyrics and the sound description and get the user's OK before generating.**
+2. **Ask only real gaps** — at most 3–4 questions in ONE `ask_question` call, 2–4 options each, the first `(Recommended)`. Turkish questions. Example: "Sözlü mü olsun?" → `(Recommended) Türkçe sözlü` / `Enstrümantal` / `İngilizce sözlü`.
+3. **Lyrics:** if vocal, write the lyrics yourself (or improve the user's) with section tags `[Intro] [Verse] [Pre-Chorus] [Chorus] [Bridge] [Outro]`, short singable lines, correct Turkish spelling (ç ğ ı İ ö ş ü — e.g. "Martılar" not "Martilar"), names spelled exactly. **Show the lyrics and the sound description and get the user's OK before generating** (cheap to fix now, a regeneration costs credits and time).
 4. **Correctness yourself:** respectful handling of religious content (no instruments if the user wants an ilahi/nasheed — then "a cappella, vocals and daf only"), no real artist names or copyrighted lyrics (write "in the style of 90s Turkish pop", never "sounds like <singer>"), child-safe content for kids' songs.
 
 Skip the questions when the user says "hızlıca", "direkt", "sormadan", or it's a redo (v2). Then list your assumptions with the result.
@@ -28,11 +30,11 @@ Skip the questions when the user says "hızlıca", "direkt", "sormadan", or it's
 ```
 [genre + subgenre], [mood], [lead vocal: gender, timbre, language "singing in Turkish"], [key instruments], [rhythm/feel], [production: warm analog / crisp modern / lo-fi], [BPM] BPM, [key if it matters]
 ```
-- Name the language of the vocals explicitly ("warm female vocal singing in Turkish"); the lyric language follows the lyrics.
-- For long/complex songs you may write a timed plan: `[0:00–0:20] Production: … Vocal: …` per section, plus "No …" exclusions at the end.
+- Name the language of the vocals explicitly ("warm female vocal singing in Turkish"); the lyric language follows the lyrics. Turkish vocals verified good by the user (2026-11-25 test "Günaydın İstanbul").
+- For long/complex songs you may write a timed plan like the community examples: `[0:00–0:20] Production: … Vocal: …` per section, plus "No …" exclusions at the end.
 - Instrumental: switch **Instrumental** on and leave lyrics empty; describe the lead instrument and structure.
 
-## 2. Generate (Compose panel)
+## 2. Generate (Compose panel — verified 2026-11-25)
 
 1. Use `chrome-devtools` MCP: `new_page` to `https://www.flowmusic.app/session` (a new session).
 2. `take_snapshot` → **ALWAYS click `Toggle compose panel` first** (Compose inputs exist in the accessibility tree even while visually collapsed, so clicking switches before toggling will time out). The right panel **Compose** has:
@@ -55,24 +57,24 @@ Skip the questions when the user says "hızlıca", "direkt", "sormadan", or it's
      return { done: false, url: location.href };
    }
    ```
-   **The new song auto-plays in the user's Chrome** — pause it right away (player bar ⏸) unless the user wants to listen there.
+   Measured: ~25 s for a 1:52 song. **The new song auto-plays in the user's Chrome** — pause it right away (player bar ⏸) unless the user wants to listen there.
 5. One Generate = one song. For important work make 2 versions (Generate again, or Remix → Variation) and let the user pick.
 
-**Producer chat (alternative):** the "Ask Producer…" box at the bottom is a chat assistant. Use it when the user wants to co-write interactively; for predictable results prefer Compose. A "Make a 15s Shorts video" suggestion chip may appear after a song — it costs credits; don't click unasked.
+**Producer chat (alternative):** the "Ask Producer…" box at the bottom is a chat assistant (settings icon: Producer Standard/Fast, Ghostwriter Standard/Pro for lyrics, Instrument model). Use it when the user wants to co-write interactively; for predictable results prefer Compose. A "Make a 15s Shorts video" suggestion chip may appear after a song — it costs credits; don't click unasked.
 
 ## 3. Download
 
-Player bar (bottom) → **⋯ (More options)** → hover **Download** → **MP3 / WAV / M4A**, **Get stems**, **Download video**. Default deliverable: **MP3**; WAV when the user will edit/mix it. Collect from Downloads (PowerShell on Windows):
+Player bar (bottom) → **⋯ (More options)** → **Download** → **MP3 / WAV / M4A**, **Get stems**, **Download video**. Default deliverable: **MP3** (48 kHz stereo, ~200 kbps); WAV when the user will edit/mix it. File lands as `<Title>.mp3` (`Untitled.mp3` without a title):
 ```powershell
 for ($n=0; $n -lt 15; $n++) { $f = Get-ChildItem "$env:USERPROFILE\Downloads" -File | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-2) -and $_.Extension -in '.mp3','.wav','.m4a','.zip' } | Sort-Object LastWriteTime | Select-Object -Last 1; if ($f -and -not (Get-ChildItem "$env:USERPROFILE\Downloads" -Filter *.crdownload)) { break }; Start-Sleep 2 }; $f.FullName
 ```
-Move it to the destination with a meaningful name, read duration with `ffprobe -v error -show_entries format=duration -of csv=p=0 <file>`, then deliver as a clickable `file://` link.
+Move it to the destination with a meaningful name, read duration with `ffprobe -v error -show_entries format=duration -of csv=p=0 <file>`, then deliver as a clickable `file://` link. A PostHog survey popup ("How well did the lyrics fit…") may appear — close it with its ✕.
 
 ## 4. Check before sending
 
-Check what can be checked: duration matches the request, file plays (`ffprobe` ok), title right. Tell the user plainly that they should listen for pronunciation/lyrics and offer a v2 with fixed spelling or a different vocal if something is off.
+Check what can be checked: duration matches the request, file plays (`ffprobe` ok), title right. Tell the user plainly that they should listen for pronunciation/lyrics — especially Turkish words — and offer a v2 with fixed spelling or a different vocal if something is off.
 
-## 5. Edit an existing song (song ⋯ → Remix)
+## 5. Edit an existing song (song ⋯ → Remix, or the Remix icon on a song page)
 
 | Option | Use |
 |---|---|
@@ -85,20 +87,18 @@ Check what can be checked: duration matches the request, file plays (`ffprobe` o
 | **Split stems** / Download → Get stems | Separate vocals, drums, bass, other |
 | **Create video** | Music video (credits — see §7) |
 
-User's own audio: chat box **+** → **Upload → Audio** (max 40 MB) or **Recording**. Use the same file-input interception as `gemini-image` §2A step 9 for uploads.
+User's own audio: chat box **+** → **Upload → Audio** (max 40 MB) or **Recording**; then ask Producer for "make a backing track for my vocal" / "remix this". Use the same file-input interception as `gemini-image` §2A step 9 for uploads.
 
 ## 6. Use with videos
 
-For a video's background music: match the length (Length field or Trim), choose Instrumental unless asked, then join with ffmpeg:
-```powershell
-ffmpeg -i video.mp4 -i music.mp3 -map 0:v -map 1:a -c:v copy -shortest -af "afade=t=out:st=<len-2>:d=2" out.mp4
-```
+For a video's background music: match the length (Length field or Trim), choose Instrumental unless asked, then join with ffmpeg in the video skill, e.g. `ffmpeg -i video.mp4 -i music.mp3 -map 0:v -map 1:a -c:v copy -shortest -af "afade=t=out:st=<len-2>:d=2" out.mp4` (keep the clip's own dialogue by mixing with `amix` instead when it has speech).
 
 ## 7. Costs and safety
 
-- Song ≈ 5 credits; balance: account menu or `https://www.flowmusic.app/settings`.
-- **Music videos are expensive.** Never start one, a "Shorts video", or buy credits without the user's OK with the cost stated. Never click **Buy Credits** / plan changes.
-- Don't publish songs, submit to Featured, follow artists, or change account settings unasked.
+- Song ≈ 5 credits; balance: account menu → "<n> credits" or `https://www.flowmusic.app/settings`. Daily free credits top up.
+- **Music videos are expensive** ("Credits are required… They can be expensive"). Never start one, a "Shorts video", or buy credits without the user's OK with the cost stated. Never click **Buy Credits** / plan changes.
+- Don't publish songs, submit to Featured, follow artists, change account settings or privacy toggles unasked. Sessions and songs stay private unless published.
+- Google doesn't claim ownership of the user's original songs; the user is responsible for inputs and use (Google ToS + Generative AI Prohibited Use Policy).
 
 ## 8. Prompt sidecar
 

@@ -1,53 +1,53 @@
 <#
 .SYNOPSIS
     Antigravity global skill kurulum scripti (Windows PowerShell).
-    gemini-image, gemini-music, gemini-video ve ui-design skillerini ~/.gemini/config/skills/ dizinine kurar.
+    skills/ altindaki tum skilleri (gemini-image, gemini-music, gemini-video, gemini-reels,
+    elevenlabs-tts, ui-design) ~/.gemini/config/skills/ dizinine kurar.
+    Ayni isimde skill varsa once yedekler; mevcut usage-log.csv ve .env dosyalarini korur.
+.EXAMPLE
+    .\install.ps1
+    .\install.ps1 -Only gemini-reels,elevenlabs-tts
 #>
-
+param(
+    [string[]]$Only,
+    [string]$Target = (Join-Path $env:USERPROFILE ".gemini\config\skills")
+)
 $ErrorActionPreference = "Stop"
 
 $SourceSkills = Join-Path $PSScriptRoot "skills"
-$TargetRoot   = Join-Path $env:USERPROFILE ".gemini\config\skills"
+if (-not (Test-Path $SourceSkills)) { Write-Error "skills klasoru bulunamadi: $SourceSkills"; exit 1 }
 
-if (-not (Test-Path $SourceSkills)) {
-    Write-Error "skills klasoru bulunamadi: $SourceSkills"
-    exit 1
+$Skills = Get-ChildItem $SourceSkills -Directory | Select-Object -ExpandProperty Name
+if ($Only) {
+    $Only = $Only | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    $Skills = $Skills | Where-Object { $Only -contains $_ }
 }
+if (-not $Skills) { Write-Error "Kurulacak skill bulunamadi."; exit 1 }
 
-New-Item -ItemType Directory -Force -Path $TargetRoot | Out-Null
-
-$Skills = @("gemini-image", "gemini-music", "gemini-video", "ui-design")
+New-Item -ItemType Directory -Force -Path $Target | Out-Null
+$Backup = Join-Path (Split-Path $Target -Parent) ("skills-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 
 foreach ($skill in $Skills) {
     $src = Join-Path $SourceSkills $skill
-    $dst = Join-Path $TargetRoot $skill
-
-    New-Item -ItemType Directory -Force -Path $dst | Out-Null
-    Copy-Item -Path (Join-Path $src "SKILL.md") -Destination (Join-Path $dst "SKILL.md") -Force
-
-    # references/ klasoru varsa icerigini temiz sekilde kopyala (ic ice references/ olusturmadan)
-    $srcRefs = Join-Path $src "references"
-    $dstRefs = Join-Path $dst "references"
-    if (Test-Path $srcRefs) {
-        New-Item -ItemType Directory -Force -Path $dstRefs | Out-Null
-        Copy-Item -Path (Join-Path $srcRefs "*") -Destination $dstRefs -Recurse -Force
+    $dst = Join-Path $Target $skill
+    $keep = @{}
+    if (Test-Path $dst) {
+        foreach ($k in "usage-log.csv", ".env") { $p = Join-Path $dst $k; if (Test-Path $p) { $keep[$k] = [System.IO.File]::ReadAllBytes($p) } }
+        New-Item -ItemType Directory -Force -Path $Backup | Out-Null
+        [System.IO.Directory]::Move($dst, (Join-Path $Backup $skill))   # .NET move also works with 8.3 short paths
     }
-
-    # usage-log.csv zaten varsa kullanicinin mevcut kota kaydini ezme
-    $srcLog = Join-Path $src "usage-log.csv"
-    $dstLog = Join-Path $dst "usage-log.csv"
-    if ((Test-Path $srcLog) -and -not (Test-Path $dstLog)) {
-        Copy-Item -Path $srcLog -Destination $dstLog
-    }
-
+    Copy-Item -Path $src -Destination $dst -Recurse
+    foreach ($k in $keep.Keys) { [System.IO.File]::WriteAllBytes((Join-Path $dst $k), $keep[$k]) }
     Write-Host "[OK] /$skill kuruldu -> $dst" -ForegroundColor Green
 }
+if (Test-Path $Backup) { Write-Host "Eski surumler yedeklendi: $Backup" -ForegroundColor Yellow }
 
 Write-Host ""
-Write-Host "Kurulum tamamlandi!" -ForegroundColor Cyan
-Write-Host "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music, /gemini-video ve /ui-design skillerini kullanabilirsiniz."
-Write-Host ""
+Write-Host "Kurulum tamamlandi! Antigravity'de yeni bir sohbet acin." -ForegroundColor Cyan
 Write-Host "Hatirlatma:" -ForegroundColor Yellow
 Write-Host "  1. Chrome'da Google AI Pro hesabiniz acik olsun."
 Write-Host "  2. Chrome DevTools MCP baglantisi aktif olsun (chrome://inspect/#remote-debugging)."
-Write-Host "  3. Video/ses/gorsel isleme icin ffmpeg ve ffprobe PATH uzerinde kurulu olsun."
+Write-Host "  3. ffmpeg ve ffprobe PATH uzerinde kurulu olsun."
+if (($Skills -contains "elevenlabs-tts") -and -not ([Environment]::GetEnvironmentVariable("ELEVENLABS_API_KEY", "User") -or $env:ELEVENLABS_API_KEY)) {
+    Write-Host "  4. ELEVENLABS_API_KEY ayarli degil (README'deki guvenli komutla bir kez ayarlayin)." -ForegroundColor Yellow
+}

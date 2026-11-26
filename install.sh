@@ -1,43 +1,40 @@
 #!/usr/bin/env bash
+# Installs every skill under skills/ into ~/.gemini/config/skills/ (backs up existing ones,
+# keeps an existing usage-log.csv and .env). Usage: bash install.sh [skill ...]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_SKILLS="$SCRIPT_DIR/skills"
-TARGET_ROOT="$HOME/.gemini/config/skills"
+TARGET_ROOT="${TARGET_ROOT:-$HOME/.gemini/config/skills}"
+BACKUP="$(dirname "$TARGET_ROOT")/skills-backup-$(date +%Y%m%d-%H%M%S)"
 
 if [ ! -d "$SOURCE_SKILLS" ]; then
   echo "Hata: skills klasoru bulunamadi: $SOURCE_SKILLS" >&2
   exit 1
 fi
-
 mkdir -p "$TARGET_ROOT"
 
-for skill in gemini-image gemini-music gemini-video ui-design; do
+if [ "$#" -gt 0 ]; then skills=("$@"); else skills=(); for d in "$SOURCE_SKILLS"/*/; do skills+=("$(basename "$d")"); done; fi
+
+for skill in "${skills[@]}"; do
   src="$SOURCE_SKILLS/$skill"
   dst="$TARGET_ROOT/$skill"
-
-  mkdir -p "$dst"
-  cp -f "$src/SKILL.md" "$dst/SKILL.md"
-
-  # references/ klasoru varsa icerigini temiz sekilde kopyala
-  if [ -d "$src/references" ]; then
-    mkdir -p "$dst/references"
-    cp -rf "$src/references/." "$dst/references/"
+  [ -d "$src" ] || { echo "Atlandi (bulunamadi): $skill"; continue; }
+  tmpkeep="$(mktemp -d)"
+  if [ -d "$dst" ]; then
+    for k in usage-log.csv .env; do if [ -f "$dst/$k" ]; then cp "$dst/$k" "$tmpkeep/$k"; fi; done
+    mkdir -p "$BACKUP"
+    mv "$dst" "$BACKUP/$skill"
   fi
-
-  # Mevcut usage-log.csv varsa ezme
-  if [ -f "$src/usage-log.csv" ] && [ ! -f "$dst/usage-log.csv" ]; then
-    cp "$src/usage-log.csv" "$dst/usage-log.csv"
-  fi
-
+  cp -R "$src" "$dst"
+  for k in usage-log.csv .env; do if [ -f "$tmpkeep/$k" ]; then cp "$tmpkeep/$k" "$dst/$k"; fi; done
+  rm -rf "$tmpkeep"
   echo "[OK] /$skill kuruldu -> $dst"
 done
+if [ -d "$BACKUP" ]; then echo "Eski surumler yedeklendi: $BACKUP"; fi
 
 echo ""
-echo "Kurulum tamamlandi!"
-echo "Antigravity'de yeni bir sohbet acarak /gemini-image, /gemini-music, /gemini-video ve /ui-design skillerini kullanabilirsiniz."
-echo ""
-echo "Hatirlatma:"
-echo "  1. Chrome'da Google AI Pro hesabiniz acik olsun."
-echo "  2. Chrome DevTools MCP baglantisi aktif olsun (chrome://inspect/#remote-debugging)."
-echo "  3. Video/ses/gorsel isleme icin ffmpeg ve ffprobe kurulu olsun."
+echo "Kurulum tamamlandi! Antigravity'de yeni bir sohbet acin."
+echo "Hatirlatma: Chrome'da Google AI Pro oturumu, Chrome DevTools MCP (chrome://inspect/#remote-debugging),"
+echo "ffmpeg/ffprobe ve elevenlabs-tts icin ELEVENLABS_API_KEY ortam degiskeni."
+echo "Not: elevenlabs-tts betikleri PowerShell (.ps1); macOS/Linux'ta 'pwsh' gerekir."
