@@ -11,6 +11,7 @@ This skill is the **director / orchestrator** for vertical `9:16` (`1080×1920`)
 - **Voiceover & Alignment — default `local-tts` (free, CPU, no key):** `$env:USERPROFILE\.gemini\config\skills\local-tts\SKILL.md` (yazgı-tts-1 / Supertonic 3 + faster-whisper word timings; voices `yazgi-male-01`, `yazgi-female-02`, `supertonic-M2` only)
 - **Voiceover — optional `elevenlabs-tts`** (when the user wants ElevenLabs; ~300–450 chars / 10,000 free/mo): `$env:USERPROFILE\.gemini\config\skills\elevenlabs-tts\SKILL.md`. Both write `vo-XX.mp3` + `.alignment.json` in the same format, so assembly is identical.
 - **Soundtrack (`~5 credits`):** `$env:USERPROFILE\.gemini\config\skills\gemini-music\SKILL.md` (Flow Music, Lyria 3.5)
+- **Identity QA (`0 credits`, local ArcFace):** `$env:USERPROFILE\.gemini\config\skills\gemini-reels\scripts\face_qa.py` via `%USERPROFILE%\.face-qa\venv\Scripts\python.exe` (InsightFace `buffalo_l` cosine similarity gate for face keyframes `>= 0.50` and video clips `>= 0.48`)
 - **Assembly & Packaging:** `ffmpeg` / `ffprobe` via `run_command`, visual QA via `read_file`.
 
 Read the relevant sibling `SKILL.md` before executing its steps so all DOM selectors, scripts, watchers, and safety rules stay exact.
@@ -24,11 +25,13 @@ Read the relevant sibling `SKILL.md` before executing its steps so all DOM selec
 ```text
 <active-workspace>\reels-<slug>\
 ├── senaryo.md               # Scenario, Style Lock, scene table, live limit check, IG caption & hashtags
+├── 00-bible\                # Character & Asset Bible (ref-char-sheet.jpg, ref-prop.jpg, ref-location.jpg, bible-sheet.jpg)
 ├── 01-frames\               # 9:16 2K Flow keyframes (scene-01.jpg ...), prompt sidecars, storyboard.jpg
-├── 02-clips\                # Raw Veo / Flow x1 / Hybrid motion clips + trimmed/normalized 1080x1920 clips
+├── 02-clips\                # Raw Veo / Flow x1 (Omni 1.2 Flash İçerik öğeleri) clips, 2x2 contact sheets
 ├── 03-audio\                # Voiceovers (vo-01.mp3 + .alignment.json, local-tts or ElevenLabs) + Flow Music (soundtrack.mp3)
-├── cover-1080x1920.jpg      # Clean 1080x1920 Reels cover image
-└── final-reels.mp4          # Final 1080x1920, 30 fps, H.264 + AAC Reels video
+├── cover-1080x1920.jpg      # Graded 1080x1920 Reels cover image
+├── final-reels.mp4          # Final 1080x1920, 24 fps (or 30 fps kinetic), H.264 + AAC Reels video
+└── final-reels-share.mp4    # Lightweight CRF 26 share copy (< 35 MB)
 ```
 
 ---
@@ -60,15 +63,25 @@ Design a tight vertical **Hook (0–3 s) → Development → Climax / Final CTA*
 
 - **Long-Reels (`>= 45 s`) Resource Planning:** For 60 s / 90 s Reels, explicitly check Veo 5-hour quota (split across Account 0 + Account 1) and total ElevenLabs Turkish character count in the Cost Plan. If live Veo capacity cannot cover all scenes, propose a balanced plan upfront (e.g., **Veo for dynamic Hook/character action + Hybrid 2K `zoompan` for static/atmospheric scenes**, or **approved Flow Video `x1`**).
 
-### Director & Script Quality Rules (Mandatory Self-Check)
-1. **Logical Continuity & Bridges:** Never jump abruptly between locations or story states (e.g., forest encounter → wolf already disguised in bed) without a visual bridge or a 1-sentence narrator bridge explaining how we got there.
-2. **No Frame-1 Spoilers:** In any climax or rescue scene, NEVER reveal the twist/rescuer already standing inside the opening keyframe (`scene-0X.jpg`). Start *before* the reveal (e.g., locked door / looming threat) so the motion actually delivers the surprise.
-3. **1 Core Action & Concise Lines per Scene:** Keep each scene to **1 primary visual action** and **1–2 short spoken/narrated lines** (~5–7 s). Never cram 3+ dialogue turns into one 10 s clip.
-4. **Tight Reels Pacing (`trim`):** Veo outputs `~10 s` clips, but don't leave dead air — plan to trim each clip to its strongest **`5–7.5 s`** (matched to `vo_dur + 0.6–0.8 s` when using ElevenLabs).
-5. **Lip-Sync Alignment Rule:** When using ElevenLabs **Narrator / Dış Ses**, explicitly instruct Veo: `"No spoken dialogue, characters do not move their lips to speak, natural ambient sound effects only"` (expressive acting, facial expressions, and physical motion without talking mouths).
+### 3-Concept Hook Pitch Gate (Mandatory when topic is open)
+Whenever the user leaves the story/topic open ("konusu sana ait", "senaryosu senin", or only gives a duration/tone), **NEVER write `senaryo.md` on the first idea you invent**. First pitch **3 genuinely different 2-line concepts** (spanning distinct genres/angles — e.g., psychological/crime twist, sharp observational comedy/irony, high-stakes human/historical mystery — each naming its **0–2 s Hook**, **Core Conflict**, and **Final Payoff/Twist**) via `ask_question` and let the user pick or steer one BEFORE drafting the script.
+
+### Anti-AI-Slop Storytelling & Script Quality Rules (Mandatory Self-Check)
+1. **0–2 s Scroll-Stopping Hook (*In Media Res*):** Never open with slow scenic atmosphere or generic exposition ("Bir varmış...", "Karadeniz'in sisli patikasında..."). Start immediately inside an unexpected discovery, contradiction, bold claim, physical stakes, or unanswered question.
+2. **Real Conflict, Escalation & Twist/Payoff:** A reel needs dramatic tension where each scene complicates the problem or flips what the viewer believes, ending with a genuine reversal, punchline, or earned payoff. **Ban linear errand plots** (`find lost item -> walk -> hand it back -> sentimental quote`).
+3. **Zero Filler / No Consecutive Walking or B-Roll Shots:** Every scene must reveal new information, escalate tension, or deliver an action beat. **Never pad runtime with 2+ consecutive walking, driving, or scenery shots.**
+4. **Ban AI Clichés & Melodramatic Platitudes:** Explicitly ban worn-out AI tropes (*misty pine forest + old analog camera/yellowed 1994 photo + tearful grandmother/elderly widow + Hallmark wisdom ending like "Bazen kaybolan bir eşya değil, yarım kalmış bir hikâyedir"*) unless the user explicitly asks for that trope. Write crisp, grounded, spoken Turkish — no textbook sentimentality or fake poetic filler.
+5. **Mandatory 5-Point Script Brutality Audit (run internally before Approval Gate #1):**
+   - *Scroll-stop test:* Would a real viewer pause in the first 2 seconds, or swipe away?
+   - *Conflict test:* Does something actually go wrong, resist, or surprise between scenes 3 and 9?
+   - *Trim-fat test:* If any scene only moves a character from A to B without changing the story state, cut or merge it.
+   - *Payoff test:* Does the ending recontextualize or punch up the opening instead of tapering into an empty inspirational platitude?
+   - *Speech test:* Read every Turkish line aloud — would a human actually say it on Instagram Reels without sounding cringe or synthetic?
+6. **Logical Continuity & No Frame-1 Spoilers:** Never jump abruptly between story states without a bridge, and never reveal a climax surprise in frame 1 (`scene-0X.jpg`) before the motion/reveal plays out.
+7. **1 Core Action, Tight Trim & Lip-Sync Alignment:** Keep each scene to **1 primary visual action** and **1–2 crisp lines**. Plan trim length to `vo_dur + 0.6–0.8 s`. When pairing with `local-tts` / `elevenlabs-tts`, instruct the video model: `"No spoken dialogue, characters do not move their lips to speak, natural ambient sound effects only"`.
 
 ### Style Lock, Scene Table & Cost Plan
-1. **Define a `Style Lock` (Visual DNA):** One concise English block copied verbatim into **every** scene prompt so lighting, color grading, lens feel, era, and recurring subjects match across cuts.
+1. **Define a `Style Lock` (Visual DNA) — Contamination Guard:** One concise English block copied verbatim into **every** scene prompt specifying **ONLY camera, lens, lighting, color palette, film stock, and atmospheric tone**. **NEVER include character clothing, hair, age, or props in `Style Lock`** (otherwise unrelated location or object shots inherit the hero's jacket or face).
 2. **Build the Scene Table** (`Sahne | Süre (Trim) | Üretim Yöntemi | Görsel & Aksiyon | Kamera | Anlatıcı / Ses | Ekranda Yazı`).
 3. **Save `senaryo.md`** in the project folder with the full script, Style Lock, and scene prompts.
 4. **Show Cost & Quota Summary + Request Approval:**
@@ -81,19 +94,23 @@ Design a tight vertical **Hook (0–3 s) → Development → Climax / Final CTA*
 
 ---
 
-## Stage 2 — 9:16 Keyframes & Visual Consistency (`gemini-image`, Approval Gate #2)
+## Stage 2 — Character & Asset Bible + 9:16 Keyframes + Face QA (`gemini-image`, Approval Gate #2)
 
 1. Open **one single Google Flow project** (`https://labs.google/fx/tools/flow` → `Yeni proje`) with Flow Agent **OFF**, **Resim**, **9:16**, **Nano Banana Pro**, **`x2`** (`0 kredi`).
-2. Generate Scene 1's opening keyframe first using `Style Lock + Scene 1 prompt`.
-3. For Scenes 2..N, enforce consistency across scenes:
-   - Always include the exact same **Style Lock**.
-   - When the same location, object, or character reappears, attach the approved Scene 1 frame (or character sheet) via Flow's **`İsteme ekle`** or **`Karakterler`** feature so the model preserves the exact look.
-4. Download the best variant of each scene in **2K** (`01-frames\scene-01.jpg`, `scene-02.jpg`, ...) and inspect every image with `read_file` (check 9:16 framing, no broken hands/faces, no unwanted text/watermarks).
-5. Build a side-by-side storyboard strip:
+2. **Seedance-Style Character & Asset Bible (`00-bible\`, `0 credits`):** Before generating story scenes, create 2K reference sheets in `00-bible\` for every recurring character (e.g. `ref-char-sheet.jpg` 3-angle portrait/outfit sheet), hero prop (`ref-prop.jpg`), and recurring key location (`ref-location.jpg`). Stack into `00-bible\bible-sheet.jpg`, inspect with `read_file`, and get quick user approval (`ask_question`) before generating keyframes.
+3. **POV / Hands-First Framing Strategy:** To prevent AI face-morphing in long Reels, rely on POV, hands-on-props, over-the-shoulder, silhouette, and wide framing for most scenes; show each protagonist's unobstructed face in **only 2–3 critical emotional scenes**.
+4. **Reference-Locked Keyframes (`01-frames\`):** Always include the exact `Style Lock`, **and attach the matching `00-bible\` reference(s)** via Flow's **`⋮ -> İsteme ekle`** on main grid tiles or **`+ -> Öğe arayın`** (select by `thumbId`; note `CDK-VIRTUAL-SCROLL-VIEWPORT` uses `storage.googleapis.com` URLs vs main grid `flow.google.com/asb/...`). Never mix unrelated character refs into prop-only shots.
+5. **Download & Automated Local ArcFace QA Gate (`face_qa.py`):** Download the best 2K variant (`01-frames\scene-01.jpg` ...). Inspect every frame with `read_file`. For every scene showing a recurring face, run:
+   ```powershell
+   & "$env:USERPROFILE\.face-qa\venv\Scripts\python.exe" "$env:USERPROFILE\.gemini\config\skills\gemini-reels\scripts\face_qa.py" `
+     --ref "00-bible\ref-char-sheet.jpg" --target "01-frames\scene-0X.jpg" --threshold 0.50
+   ```
+   Regenerate any failing (`pass: false` / `< 0.50`) face frame (zero credit cost in Flow Resim) BEFORE spending any video quota/credits.
+6. Build a side-by-side storyboard strip (`storyboard.jpg`):
    ```powershell
    ffmpeg -v error -y -i scene-01.jpg -i scene-02.jpg -i scene-03.jpg -filter_complex "[0]scale=-1:600[a];[1]scale=-1:600[b];[2]scale=-1:600[c];[a][b][c]hstack=inputs=3" -q:v 2 storyboard.jpg
    ```
-   (Adjust inputs count to match scenes.) Inspect `storyboard.jpg` with `read_file` and present it to the user for **Approval Gate #2** before spending any video quota/credits.
+   (Adjust inputs count to match scenes.) Inspect `storyboard.jpg` with `read_file` and present it (plus ArcFace keyframe scores) to the user for **Approval Gate #2** before spending any video quota/credits.
 
 ---
 
@@ -110,11 +127,15 @@ First generate **2–3 one-line voice samples** and let the user pick (`ask_ques
   - When pairing with ElevenLabs voiceover, prompt Veo: `"Animate this image smoothly, keeping the exact same subject, environment, lighting, and visual style. No spoken dialogue, characters do not move their lips to speak, natural ambient sound effects only, no background music, no text on screen."`
 - Check every downloaded clip with a `2×2` contact sheet via `read_file` (`gemini-video` §3).
 
-### Priority 2: Google Flow Video (ONLY if Veo quota is out AND user approves credit cost)
+### Priority 2: Google Flow Video (Veo fallback OR Multi-Reference Identity Lock — ONLY after user credit approval)
+- **Single-Model Lock (Mandatory):** Never mix different video models within the same Reels film (e.g., half Veo + half Omni), because grain, lens sharpness, and skin rendering shift noticeably across cuts.
+- **Multi-Reference Identity Mode (`Omni 1.2 Flash · İçerik öğeleri`, verified 2026-11-26):** When strict Seedance-style character/prop consistency is the top priority (or Veo quota is out), use **Flow Video (`Video · 720p · 9:16 · İçerik öğeleri · x1`)** with `Omni 1.2 Flash`:
+  - Verified live pricing: **`8 sn. = 24`**, **`9 sn. = 27`**, **`10 sn. = 30`**, **`11 sn. = 36`** credits per clip (note **Veo 3.1 - Lite · `Kareler` · `x1`** is `10 credits` for single start-frame animation).
+  - Attach **both** the scene keyframe (`01-frames\scene-XX.jpg`) **and** the matching primary `00-bible\` reference (`ref-char-sheet.jpg` / `ref-prop.jpg`) inside `İçerik öğeleri` so subject identity remains locked throughout the motion.
 - **CRITICAL `x1` CREDIT GUARD:** Google Flow can generate up to 4 copies (`x1–x4`) of the same video prompt, which multiplies credit burn up to 4×.
   - Before submitting ANY video prompt in Google Flow, open the settings chip and **verify it says `Video` · `9:16` · `x1`** (NEVER `x2`, `x3`, or `x4` unless the user explicitly asks for variants).
-  - Verify the exact footer credit cost (e.g. `10 kredi` for Veo 3.1 Lite, `24 kredi` for Omni 1.2 Flash) matches what the user approved.
-  - Attach the approved 9:16 keyframe as the start frame (`İsteme ekle` / frame input) to preserve scene consistency.
+  - Verify the exact footer credit cost matches what the user approved.
+- **Post-Video ArcFace + Visual QA:** Filter Flow to `Videolar`, serialize Download + `Move-Item` one clip at a time (never fire parallel downloads), inspect `2×2` contact sheets via `read_file`, AND run `face_qa.py --ref <bible> --video <clip> --samples 4 --threshold 0.48` on every human-face clip.
 
 ### Hybrid Quota Mode (2K Still + `ffmpeg` Motion) — Consistency Rules
 **Not a default.** The user rejected "photo-only" scenes in v1. Use Hybrid only when the user explicitly chooses it — otherwise wait for the 5-hour window, use the second account, or ask for Flow Video credits (state the cost).
@@ -151,14 +172,16 @@ Unless the user explicitly prefers raw clip audio only:
 
 ## Stage 5 — Assembly, Safe-Zone Captions, Cover & Caption Draft (`ffmpeg`)
 
-### 5a. Trim & Normalize Every Clip to Uniform Spec
-Trim each clip to its tight scripted duration (`-t <dur>`, matched to `vo_dur + 0.6–0.8 s` when using ElevenLabs, skipping dead air) and normalize to `1080×1920, 30 fps, yuv420p, SAR 1:1, 48 kHz stereo AAC`:
+### 5a. Trim, Overscan Crop, Filmic Grade & Normalize
+Trim each clip to its tight scripted duration (`-t <dur>`, matched to `vo_dur + 0.6–0.8 s`, skipping dead air).
+- **24 fps realistic default:** Use **`fps=24`** for realistic/documentary/cinematic Reels (`fps=30` only for fast kinetic/commercial edits).
+- **3.5% Overscan Crop + Kodak Vision3 Filmic Pass:** `35mm`-prompted Flow frames often have tiny dark rounded film-gate corners, and raw AI clips look overly digital. Apply a 3.5% overscan crop (`scale=1120:1992...,crop=1080:1920`), lifted blacks/soft highlight curve, cool-shadow/warm-highlight `colorbalance`, `eq`, temporal 35mm grain (`noise=alls=7:allf=t+u`), and subtle `vignette=PI/6` uniformly to every clip:
 
 ```powershell
-ffmpeg -v error -y -i $raw -t $trimDur -vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1,format=yuv420p" `
-  -c:v libx264 -crf 18 -preset medium -c:a aac -ar 48000 -ac 2 $norm
+$filmVf = "scale=1120:1992:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:1920,fps=24,setsar=1,curves=m='0/0.03 0.25/0.23 0.5/0.50 0.75/0.76 1/0.96',colorbalance=rs=-0.02:gs=0.00:bs=0.03:rm=0.01:gm=0.00:bm=-0.01:rh=0.02:gh=0.01:bh=-0.02,eq=saturation=0.90:contrast=1.04,noise=alls=7:allf=t+u,vignette=PI/6,format=yuv420p"
+ffmpeg -v error -y -i $raw -t $trimDur -vf $filmVf -c:v libx264 -crf 18 -preset medium -c:a aac -ar 48000 -ac 2 $norm
 ```
-*(If a clip has no audio stream, add `-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 -shortest`.)*
+*(If a clip has no audio stream, add `-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 -shortest`. In PowerShell scripts run on Windows systems with non-ASCII paths such as `[char]0x0130` (`İ`), construct paths via `[char]0x0130` or `$env:USERPROFILE` and stage `ffmpeg`/OpenCV/libass temp files in `$env:TEMP\...` ASCII workdirs; `face_qa.py` already handles Unicode paths via `np.fromfile` + temp video copy.)*
 
 ### 5b. Join Clips & Mix Voiceover + Ambient + Soundtrack
 - Join normalized clips with rhythm-matched hard cuts (`concat` demuxer) or `0.35 s` `xfade` + `acrossfade` into `02-clips\joined.mp4`.
@@ -182,9 +205,9 @@ ffmpeg -v error -y -i $raw -t $trimDur -vf "scale=1080:1920:force_original_aspec
 - ffmpeg on this PC has no fontconfig: `drawtext` needs `fontfile=`, libass needs `fontsdir=.` with `segoeuib.ttf` copied next to `subtitles.ass`.
 - **Windows `libass` Unicode path note:** If the path contains non-ASCII characters (e.g. a user folder name with `İ`), temporarily copy `subtitles.ass` into the working directory (`Push-Location`), run `ass=subtitles.ass`, then remove the temporary copy.
 
-### 5d. Automatic Cover & Instagram Caption/Hashtag Draft
-Always generate both deliverables alongside `final-reels.mp4`:
-1. **Reels Cover (`cover-1080x1920.jpg`):** Scale/crop the strongest approved 2K `01-frames\` keyframe to `1080×1920` (`ffmpeg -q:v 2`). Verify with `read_file`.
+### 5d. Automatic Cover, Share Export & Instagram Caption/Hashtag Draft
+Always generate both deliverables alongside `final-reels.mp4` + `final-reels-share.mp4` (`-crf 26`, `< 35 MB`):
+1. **Reels Cover (`cover-1080x1920.jpg`):** Apply the same 3.5% overscan crop + filmic color grade (without heavy motion noise) to the strongest approved 2K `01-frames\` keyframe at `1080×1920` (`ffmpeg -q:v 2`). Verify with `read_file`.
 2. **Instagram Caption & Hashtags:** Append a ready-to-paste Turkish **Instagram Açıklama & Hashtag Taslağı** section to `senaryo.md`.
 
 ---
@@ -215,12 +238,23 @@ Other practical lessons from that run:
 - Both accounts can return the **capacity error** at the same time (Google-side, not quota). Fallback: Flow Video with the user's OK — Video · **Kareler** · 9:16 · **Veo 3.1 - Lite** · **x1** (10 credits), **Başlat** = start-frame picker with a search box; download via tile ⋮ → İndir → **720p Orijinal boyut**.
 - Chrome blocks repeated downloads from one site after the first — ask the user to allow "multiple downloads" for flow.google.com (address-bar icon); never change Chrome settings yourself.
 - Collect each downloaded file by name/time before triggering the next download, so files don't get mixed up.
-- Files over ~30 MB are awkward to share; also deliver a CRF 26 copy.
+- Files over ~30 MB are awkward to share; also deliver a CRF 26 copy (`final-reels-share.mp4`).
+
+## User review of v2 (2026-11-27) — character lock succeeded, cliché script rejected
+
+After "Sisli Patika" v1 was rejected for character drift and synthetic look, v2 proved the technical architecture works:
+- **What worked (`v2` pass):** Seedance-style `00-bible/` multi-reference + POV/hands-first framing + single-model **`Omni 1.2 Flash · İçerik öğeleri · x1`** + **`face_qa.py`** (ArcFace `buffalo_l` scores jumped from `0.24–0.37` in v1 to `0.67–0.82` across all keyframes and final videos) + `24 fps` Kodak Vision3 filmic grade + 3.5% overscan crop cleanly solved character drift and synthetic glossy AI skin/lighting.
+- **What failed (`"senaryo berbat kötü olmuş"`):** The story itself (*finding a muddy 1994 camera on a misty Black Sea trail -> walking to a cabin -> returning it to an emotional grandmother -> "Bazen kaybolan bir eşya değil..."*) was pure linear AI-slop with zero real conflict, consecutive walking filler, and a cliché sentimental moral.
+- **Mandatory rules added:** Never skip the **3-Concept Hook Pitch Gate** when the topic is open; enforce an **0–2 s hook**, **real conflict + reversal/twist**, **zero consecutive walking/b-roll filler**, **strict ban on AI cliché tropes/platitudes**, and the **5-Point Script Brutality Audit** in Stage 1.
+
+## Self-Revision on Errors (Mandatory)
+
+If any error, UI/DOM change, FFmpeg/ASS/PowerShell bug, Unicode path trap, video/voice QA failure, or script/creative failure occurs while running this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (and update `scripts/face_qa.py` or the sibling skill when affected) with the root cause and verified fix before finishing the task, and tell the user what rule was updated.
 
 ## Rules
 
 - Never start Stage 1/2 production without an active workspace open (warn first if missing).
-- Always plan the scenario (`Stage 1`) with Director QA checks and get approval before generating keyframes; always show `storyboard.jpg` (`Stage 2`) before spending Veo quota, narration (local or ElevenLabs characters), or Flow Video credits.
+- Always pitch 3 concepts first when topic is open, pass the Anti-AI-Slop & Brutality Audit (`Stage 1`), and get approval before generating keyframes/Bible; always show `00-bible/bible-sheet.jpg`, `storyboard.jpg`, and ArcFace `face_qa.py` results (`Stage 2`) before spending Veo quota, narration, or Flow Video credits.
 - Never trust `usage-log.csv` alone for remaining Gemini video quota — check live availability in Chrome.
 - Never generate Flow Video at `x2`, `x3`, or `x4` by default — strictly **`x1`** and only after explicit user approval of the credit cost.
 - Never print/log `ELEVENLABS_API_KEY`; never use paid Gemini/Veo API keys; close every Chrome tab opened during generation (`close_page`).

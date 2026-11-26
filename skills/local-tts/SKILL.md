@@ -56,6 +56,10 @@ Existing audio, timings only: `& $PY "$S\local_tts.py" --align-only --text-file 
 - yazgı reads calmly with little emotion; questions without "mı" don't rise — add "mı" or rephrase.
 - Foreign names are read with Turkish letter sounds; respell them in the text ("Xiaomi" → "Şaomi").
 
+## Self-Revision on Errors (Mandatory)
+
+If any error, venv/dependency issue, alignment mismatch, pronunciation failure, encoding/path trap, or broken command happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (recording the root cause and verified fix) before completing the task, and report the skill update to the user.
+
 ## Rules
 
 - Get the text and voice approved before generating long narration; open the result with `Start-Process` and say which voice and speed were used.

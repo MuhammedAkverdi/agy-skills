@@ -7,7 +7,7 @@
 | **`/gemini-image`** | Google Flow (`Nano Banana Pro`) + yedek Gemini Chat | **0 kredi** | Ön brifing, 2K indirme, fotoğraf düzenleme, Instagram/YouTube boyutlandırma, yeşil ekranla şeffaf PNG logo |
 | **`/gemini-music`** | Google Flow Music (`Lyria 3.5`) | ~5 kredi / şarkı | Ön brifing, Türkçe/İngilizce söz yazımı & onayı, enstrümantal, MP3/WAV/M4A & stem ayırma |
 | **`/gemini-video`** | Gemini Pro (`Veo`, `Neon Orta`) | 5 saatlik kullanım sınırı | Canlı limit kontrolü, konuya özel ön brifing, 10 sn 720p sesli klip, 2×2 kare kontrolü, image-to-video (Flow → Veo), Flow Video `x1` yedeği, `ffmpeg` klip birleştirme & müzik miksleme |
-| **`/gemini-reels`** | Yukarıdaki skillerin yönetmeni + `ffmpeg` | Görseller 0 kredi, Veo kotası, ~5 kredi müzik, dış ses ücretsiz (yerel) | Senaryo + Style Lock, 9:16 görseller, her sahne gerçek video, kadın/erkek anlatıcı örnekleri, müziği sese göre kısan miks, kelime kelime altyazı, ortalı başlık, 16 sn taslak onayı, kapak + Instagram açıklaması |
+| **`/gemini-reels`** | Yukarıdaki skillerin yönetmeni + `ffmpeg` + `face_qa.py` | Görseller 0 kredi, Veo kotası / Flow `Omni 1.2 Flash x1`, ~5 kredi müzik, dış ses ücretsiz (yerel) | Konu açıksa 3 kanca konsept seçimi + Anti-AI-Slop denetimi, `00-bible` çoklu referans karakter kilidi, ArcFace yüz QA (`face_qa.py`), `24 fps` filmik renk/gren, müziği sese göre kısan miks, kelime kelime altyazı, 16 sn taslak onayı, kapak + CRF 26 paylaşım sürümü |
 | **`/local-tts`** | Bilgisayarınızda: yazgı-tts-1 (Apache-2.0) + Supertonic 3 (OpenRAIL-M) + faster-whisper (MIT) | **Ücretsiz**, anahtar/hesap yok, ekran kartı gerekmez | 3 seçilmiş ses (sıcak erkek anlatıcı, sakin olgun kadın, çok dilli erkek), `--speed`, kelime zamanları (ElevenLabs ile aynı biçim), Reels'in varsayılan anlatıcısı |
 | **`/elevenlabs-tts`** | ElevenLabs REST API (`/with-timestamps`) | İsteğe bağlı; ücretsiz plan: 10.000 karakter/ay | Türkçe dış ses, `-Speed` ile yavaş anlatım, karakter karakter zaman damgası (altyazı için), ses seçimi kuralları |
 | **`/ui-design`** | Hibrit (`taste-skill` + `frontend-design` + `impeccable`) | Ücretsiz (yerel + Chrome MCP) | Yüzey modu & iş türü kuralları, 2 aşamalı Design Thesis (Anti-Slop Swap Test), `1440×900` & `390×844` Chrome görsel kapısı, `critique` / `polish` / `audit` |
@@ -120,10 +120,12 @@ Skilleri doğrudan slash komutuyla çağırabilir veya doğal dilde isteğinizi 
 /gemini-reels 60 saniyelik bir çocuk masalı reels'i yap, kadın anlatıcı olsun
 ```
 
-- Önce süreyi (saniye), anlatıcı sesini ve ses yapısını sorar; senaryoyu ve **storyboard**'u onayınıza sunmadan kota/kredi harcamaz.
-- Görselleri Flow'da 9:16 üretir, **her sahneyi gerçek video** olarak Veo'da canlandırır (iki hesap paralel), anlatıcı için 2–3 ses örneği dinletir (varsayılan ücretsiz yerel ses), Flow Music'te fon müziği yapar.
-- `ffmpeg` ile birleştirir: anlatıcı müziğin en az 8 dB üstünde (ölçülerek), müzik konuşurken otomatik kısılır, **altyazı kelime kelime** gelir, başlık ortalı ve animasyonlu. Tamamını yapmadan önce **16 sn'lik taslağı** onaylatır.
-- Teslim: `final-reels.mp4`, kapak, storyboard ve Instagram açıklaması + hashtag'ler.
+- Konu açık bırakıldığında önce 3 farklı türde kanca konsepti sunar; **Anti-AI-Slop** ve 5 noktalı senaryo denetiminden geçmeden prodüksiyona başlamaz.
+- `00-bible` altında karakter/nesne/mekân referans sayfaları üretir; yüz içeren kare (`>= 0.50`) ve video kliplerini (`>= 0.48`) yerel ArcFace (`scripts/face_qa.py`) ile doğrular. Çoklu referans tutarlılığı gerektiğinde tek model kilidiyle **`Omni 1.2 Flash · İçerik öğeleri · x1`** kullanabilir.
+- `ffmpeg` ile `24 fps` Kodak Vision3 tarzı renk geçişi, temporal 35mm gren ve %3.5 overscan kırpma uygular; anlatıcı müziğin en az 8 dB üstünde, **altyazı kelime kelime**, başlık ortalı. Tamamını yapmadan önce **16 sn'lik taslağı** onaylatır.
+- Teslim: `final-reels.mp4`, hafif `final-reels-share.mp4` (`CRF 26`), filmik `cover-1080x1920.jpg`, `00-bible/bible-sheet.jpg`, storyboard ve Instagram açıklaması + hashtag'ler.
+
+> **Kendi Kendini Revize Kuralı (`Self-Revision on Errors`):** Paketteki 7 skill'in tamamı, kullanım sırasında karşılaşılan UI/DOM değişiklikleri, FFmpeg/ASS hataları veya kalite sorunları çözüldüğünde ilgili `SKILL.md` dosyasını anında güncelleme kuralı içerir.
 
 ### 5. `/local-tts` — Ücretsiz Türkçe Dış Ses
 
@@ -175,7 +177,9 @@ agy-skills/
     │   ├── SKILL.md
     │   └── usage-log.csv        # Video üretim geçmişi şablonu
     ├── gemini-reels/
-    │   └── SKILL.md
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       └── face_qa.py         # Yerel ArcFace karakter kimlik doğrulama kapısı
     ├── local-tts/
     │   ├── SKILL.md
     │   └── scripts/

@@ -104,6 +104,10 @@ For a video's background music: match the length (Length field or Trim), choose 
 
 Save `<file>.prompt.txt` next to the audio with the lyrics, sound description, model, session URL and date, so a v2 can start from it.
 
+## Self-Revision on Errors (Mandatory)
+
+If any error, Flow Music UI/DOM change, broken selector, upload/download failure, audio format issue, or unexpected failure happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (recording the root cause and verified fix) before completing the task, and report the skill update to the user.
+
 ## Rules
 
 - Generate only what the user asked for; no imitation of real singers or copyrighted lyrics.

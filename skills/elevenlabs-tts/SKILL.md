@@ -83,6 +83,10 @@ Aggregate `alignment.json` character timings into short 1–2 line phrases (by s
 
 ---
 
+## Self-Revision on Errors (Mandatory)
+
+If any error, API/quota change, encoding/path trap, alignment mismatch, or broken script happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (recording the root cause and verified fix) before completing the task, and report the skill update to the user.
+
 ## Rules
 
 - Never print, echo, or commit `ELEVENLABS_API_KEY` or `.env` contents.

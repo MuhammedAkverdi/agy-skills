@@ -106,6 +106,10 @@ Every UI deliverable MUST be verified in real Chrome before presenting to the us
    - Review both screenshots against [references/critique-and-polish.md](references/critique-and-polish.md) (P0–P3 + Cognitive Load).
    - Fix every P0/P1 defect found, re-verify the affected view with `take_screenshot` + `read_file`, reset emulation (`emulate` without `viewport`), and close the temporary Chrome tab (`close_page`).
 
+## Self-Revision on Errors (Mandatory)
+
+If any error, Chrome DevTools inspection issue, layout/responsive failure, console error, or visual QA defect happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (or the affected `references/*.md` file) with the root cause and verified fix before finishing the task, and report the update to the user.
+
 ## Rules
 
 - Never claim a UI looks good without inspecting the rendered desktop and mobile screenshots via `read_file`.

@@ -125,7 +125,8 @@ Use `result='error: <short reason>'` for failures/limits (activity log only — 
 ## 5. Image-first (image-to-video)
 
 1. Make the still with the `gemini-image` skill — **in Google Flow first** (its §2A: Nano Banana Pro, 0 credits, set the same aspect ratio as the video, download 2K); fall back to Gemini chat only if Flow fails. Show it, get the user's OK. (Keep the 2K file under 10 MB for upload; if larger, save a 1080p copy with ffmpeg.)
-   - **Flow Video fallback (`x1` strict default):** Flow can also make video (its own credit pool, ~1,050 credits/month on Pro: Veo 3.1 Lite 10, Omni 1.2 Flash 720p 8 s 24 credits per clip; balance in the PRO badge panel). Only use it when Gemini Veo is unavailable on both accounts **and** the user explicitly approves the stated credit cost. **CRITICAL `x1` GUARD:** Flow can generate up to 4 copies (`x1–x4`) of the same video prompt, multiplying credit burn up to 4×. Before sending ANY Flow video prompt, verify the settings chip is strictly set to **`Video` · `<aspect>` · `x1`** (never `x2/x3/x4` unless the user explicitly asked for multiple variants) and confirm the footer credit cost.
+   - **Flow Video fallback (`x1` strict default):** Flow can also make video (its own credit pool, ~1,050 credits/month on Pro; balance in the PRO badge panel). Verified `2026-11-26` live pricing: **Veo 3.1 - Lite** = `10 credits` (`Kareler` start frame); **`Omni 1.2 Flash · 720p · 9:16 · İçerik öğeleri · x1`** (multi-reference video lock) = `8 sn. = 24`, `9 sn. = 27`, `10 sn. = 30`, `11 sn. = 36` credits. Only use Flow Video when Gemini Veo is unavailable on both accounts OR when strict Seedance-style multi-reference (`İçerik öğeleri`) character/asset lock is required **and** the user explicitly approves the stated credit cost. **CRITICAL `x1` GUARD:** Flow can generate up to 4 copies (`x1–x4`) of the same video prompt, multiplying credit burn up to 4×. Before sending ANY Flow video prompt, verify the settings chip is strictly set to **`Video` · `<aspect>` · `x1`** (never `x2/x3/x4` unless variants were explicitly requested) and confirm the footer credit cost.
+   - **Single-model lock & Multi-Ref QA:** Never mix different video models within the same multi-clip film (aesthetic, grain, and skin texture diverge across models). With `Omni 1.2 Flash · İçerik öğeleri`, attach the scene keyframe + primary Character/Asset Bible ref so identity holds across the clip. Filter to `Videolar`, serialize Download + `Move-Item` one clip at a time (never trigger concurrent downloads in Chrome), and for human-face clips verify identity continuity with `$env:USERPROFILE\.gemini\config\skills\gemini-reels\scripts\face_qa.py --ref <bible> --video <clip> --samples 4 --threshold 0.48` alongside the `2×2` contact sheet.
 2. Upload (verified 2026-11-26) — never click "Upload files" directly (opens native OS picker):
    - Always keep project assets inside the active workspace.
    - On `/videos` (or `/u/1/videos`), click **Upload and tools (+)** so the menu stays open (the image input only exists while it's open; Escape removes it).
@@ -188,6 +189,10 @@ For heavy editing (titles, captions, motion graphics) hand the clips to the Hype
 ## Not an option
 
 - No paid Veo API key; the user chose subscription only.
+
+## Self-Revision on Errors (Mandatory)
+
+If any error, Veo/Flow UI/DOM change, capacity/quota edge case, download collision, broken selector, or QA failure happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (recording the root cause and verified fix) before completing the task, and report the skill update to the user.
 
 ## Rules
 

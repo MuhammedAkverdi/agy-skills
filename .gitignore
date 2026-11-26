@@ -3,3 +3,5 @@ Thumbs.db
 *.tmp
 *.crdownload
 .env
+__pycache__/
+*.pyc

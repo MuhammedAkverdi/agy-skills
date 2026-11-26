@@ -119,7 +119,10 @@ Verified live 2026-11-25 (account shows "PRO", Turkish UI; first-visit welcome +
    }
    ```
    Then top-bar **+ (Medya menüsü ekle)** → **Yükle** → `take_snapshot` to find the `agy-media-upload` file input → `upload_file` with the absolute path (png/jpg/webp/gif/heic, < 10 MB). Flow then shows **"Bu resmin kullanım hakları"** (confirm you have the rights) with **İptal / Kabul ediyorum** — confirm with the user in chat before clicking "Kabul ediyorum" unless they already approved it in this session. The photo uploads (~10 s) under **Yüklemeler** in the sidebar; click it → editor (step 8) → type the change → ~20 s.
-10. Other Flow features: **Karakterler** (consistent faces), **Sahneler**, **Kitaplık** collections.
+10. Other Flow features & Multi-Reference consistency (verified 2026-11-26): **Karakterler** (consistent faces), **Sahneler**, **Kitaplık** collections.
+    - **Multi-ref workflow:** Generate a dedicated Character/Prop/Location Reference Bible first, then attach matching Bible refs via main-grid `⋮ -> İsteme ekle` or `+ -> Öğe arayın` (`thumbId`). Note that `CDK-VIRTUAL-SCROLL-VIEWPORT` in the `+` picker uses signed `storage.googleapis.com` URLs, while main grid tiles (`main img[alt="Kullanıcının resmini gösteren kutu"]`) use `flow.google.com/asb/...`.
+    - **Style Lock bleed guard:** Keep wardrobe, hair, and props OUT of shared `Style Lock` strings (specify camera/lens/lighting/color/film stock only), otherwise unrelated prop/location shots inherit the character's jacket or face.
+    - **35mm film-gate corners:** Prompts mentioning "35mm film" or vintage film frames can produce tiny dark rounded corners; apply a ~3.5% overscan scale+crop in assembly when clean full-bleed frames are needed.
 11. Note the project URL for refinements, close the tab you opened (`close_page`).
 
 **Credits (account panel: click the PRO badge):** images = **0 credits** with every Nano Banana model, x1–x4. Video in Flow costs credits: Omni 1.2 Flash 720p 8 s = 24, Veo 3.1 Lite = 10 per clip; the Pro plan has ~1,050 credits per month. Never start a video here without the user's OK and the cost stated.
@@ -237,6 +240,10 @@ Deliver the file paths as clickable `file://` links plus a one-line summary (res
 ## Fallback: Antigravity `image-generator` subagent
 
 If Chrome / Flow / Gemini chat are completely unavailable and the user wants an immediate result, offer to use the built-in `image-generator` subagent (note: it does not use Google Flow's Nano Banana Pro 2K pipeline).
+
+## Self-Revision on Errors (Mandatory)
+
+If any error, Flow/Gemini UI/DOM change, broken watcher/selector, download/upload failure, or visual consistency trap happens while using this skill and you diagnose or fix it, **immediately revise this `SKILL.md`** (recording the root cause and verified fix) before completing the task, and report the skill update to the user.
 
 ## Rules
 
